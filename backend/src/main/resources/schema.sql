@@ -63,13 +63,8 @@ CREATE TABLE IF NOT EXISTS ai_diagnostics (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- -- Indexes for performance
--- CREATE INDEX idx_sensor_readings_device_id ON sensor_readings(device_id);
--- CREATE INDEX idx_sensor_readings_timestamp ON sensor_readings(timestamp DESC);
--- CREATE INDEX idx_ai_diagnostics_user_id ON ai_diagnostics(user_id);
--- CREATE INDEX idx_pets_user_id ON pets(user_id);
 
--- Indexes for performance (Agregamos IF NOT EXISTS)
+-- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_sensor_readings_device_id ON sensor_readings(device_id);
 CREATE INDEX IF NOT EXISTS idx_sensor_readings_timestamp ON sensor_readings(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_diagnostics_user_id ON ai_diagnostics(user_id);
