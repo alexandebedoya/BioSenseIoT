@@ -51,8 +51,38 @@ export class AuthService {
     return data;
   }
 
-  static getToken(): string | null {
-    return localStorage.getItem('auth_token');
+  static async login(email: string, password: string): Promise<AuthResponse> {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Error al iniciar sesión');
+    }
+
+    const data: AuthResponse = await response.json();
+    localStorage.setItem('auth_token', data.token);
+    return data;
+  }
+
+  static async register(email: string, password: string, fullName: string): Promise<AuthResponse> {
+    const response = await fetch(`${API_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, fullName }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Error al registrarse');
+    }
+
+    const data: AuthResponse = await response.json();
+    localStorage.setItem('auth_token', data.token);
+    return data;
   }
 
   static logout(): void {

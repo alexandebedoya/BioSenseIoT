@@ -40,12 +40,15 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     setIsLoading(true)
     try {
       if (isRegistering) {
-        toast.info("Registro manual en desarrollo. Usa Google por ahora.")
+        await AuthService.register(email, password, fullName)
+        toast.success("Cuenta creada correctamente")
       } else {
-        toast.info("Login manual en desarrollo. Usa Google por ahora.")
+        await AuthService.login(email, password)
+        toast.success("Sesión iniciada")
       }
-    } catch (error) {
-      toast.error("Error en la operación")
+      onLogin()
+    } catch (error: any) {
+      toast.error(error.message || "Error en la operación")
     } finally {
       setIsLoading(false)
     }
