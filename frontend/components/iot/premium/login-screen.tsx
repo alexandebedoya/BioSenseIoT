@@ -136,7 +136,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           {/* Register Link */}
           <p className="text-center mt-6 text-sm text-muted-foreground">
             Nuevo?{" "}
-            <button className="text-primary font-medium hover:text-primary/80 transition-colors">
+            <button 
+              type="button"
+              onClick={handleGoogleLogin}
+              className="text-primary font-medium hover:text-primary/80 transition-colors"
+            >
               Crea una cuenta
             </button>
           </p>

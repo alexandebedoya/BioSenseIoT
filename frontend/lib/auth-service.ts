@@ -1,87 +1,62 @@
 import { Capacitor } from '@capacitor/core';
-import { AuthResponse, GoogleUser } from './types';
+import { AuthResponse } from './types';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
-// NOTA: Se asume que el desarrollador instala @codetrix-studio/capacitor-google-auth para el login nativo
-// import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+// Inicializar GoogleAuth con tu Client ID real
+if (!Capacitor.isNativePlatform()) {
+  GoogleAuth.initialize({
+    clientId: '669903110693-3f1lt6ci39go17j1hsutaeabrt36utq0.apps.googleusercontent.com',
+    scopes: ['profile', 'email'],
+    grantOfflineAccess: true,
+  });
+}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export class AuthService {
   
-  /**
-   * Realiza el login con Google dependiendo de la plataforma.
-   * En Capacitor usa el plugin nativo, en Web usa la API de Google standard.
-   */
   static async loginWithGoogle(): Promise<AuthResponse> {
     try {
-      let idToken: string;
-
-      if (Capacitor.isNativePlatform()) {
-        // Implementación para Android/iOS usando Capacitor Google Auth
-        // const googleUser = await GoogleAuth.signIn();
-        // idToken = googleUser.authentication.idToken;
-        
-        // Mock para demostración (debe ser reemplazado por el código comentado arriba)
-        idToken = 'MOCK_GOOGLE_ID_TOKEN';
-      } else {
-        // Implementación para Web
-        // Aquí se usaría @react-oauth/google o la SDK directa de Google
-        idToken = 'MOCK_WEB_GOOGLE_ID_TOKEN';
+      // Disparar el login nativo o web real del plugin
+      const googleUser = await GoogleAuth.signIn();
+      const idToken = googleUser.authentication.idToken;
+      
+      if (!idToken) {
+        throw new Error('No se recibió idToken de Google');
       }
 
       return await this.sendTokenToBackend(idToken);
-    } catch (error) {
-      console.error('Error en el login de Google:', error);
-      throw new Error('Error al iniciar sesión con Google');
+    } catch (error: any) {
+      console.error('Error GoogleAuth Detallado:', error);
+      // Extraer código de error de Google para depuración
+      const errorCode = error.code || error.message;
+      throw new Error(`Google Login Falló (${errorCode})`);
     }
   }
 
-  /**
-   * Envía el idToken al backend de Spring Boot WebFlux para validación e intercambio por JWT.
-   */
   private static async sendTokenToBackend(idToken: string): Promise<AuthResponse> {
     const response = await fetch(`${API_URL}/api/auth/google`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error en la autenticación del backend');
+      const errorText = await response.text();
+      throw new Error(`Servidor (${response.status}): ${errorText}`);
     }
 
     const data: AuthResponse = await response.json();
-    
-    // Guardar el token de forma segura (localStorage para web, SecureStorage para nativo)
     localStorage.setItem('auth_token', data.token);
-    
     return data;
   }
 
-  /**
-   * Obtiene el token guardado.
-   */
   static getToken(): string | null {
     return localStorage.getItem('auth_token');
   }
 
-  /**
-   * Cierra la sesión borrando el token.
-   */
   static logout(): void {
     localStorage.removeItem('auth_token');
-    if (Capacitor.isNativePlatform()) {
-      // GoogleAuth.signOut();
-    }
-  }
-
-  /**
-   * Determina si el usuario está autenticado.
-   */
-  static isAuthenticated(): boolean {
-    return !!this.getToken();
+    GoogleAuth.signOut();
   }
 }
