@@ -21,4 +21,8 @@ hardware/**/.gcc-flags.json
 # Env & Secrets
 .env
 .env.local
-.env.example
+.env.production.local
+.env.development.local
+
+# NO IGNORAR EL SIGUIENTE (Es la guía para otros)
+# !.env.example
