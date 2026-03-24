@@ -15,7 +15,7 @@
     "@capacitor/android": "^6.1.2",
     "@capacitor/cli": "^6.1.2",
     "@capacitor/core": "^6.1.2",
-    "@codetrix-studio/capacitor-google-auth": "^3.4.0",
+    "@codetrix-studio/capacitor-google-auth": "^3.3.0",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "1.2.12",
     "@radix-ui/react-alert-dialog": "1.1.15",
