@@ -193,11 +193,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             {isGoogleLoading ? "Cargando..." : "Continuar con Google"}
           </Button>
 
-          <p className="text-center mt-6 text-xs text-muted-foreground leading-relaxed">
+          <div className="text-center mt-6 text-xs text-muted-foreground leading-relaxed">
             Al continuar, aceptas nuestros{" "}
-            <button className="text-primary hover:underline">Términos</button> y{" "}
-            <button className="text-primary hover:underline">Política de Privacidad</button>
-          </p>
+            <button type="button" className="text-primary hover:underline">Términos</button> y{" "}
+            <button type="button" className="text-primary hover:underline">Política de Privacidad</button>
+          </div>
         </div>
       </div>
     </div>
