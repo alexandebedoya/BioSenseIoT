@@ -1,0 +1,44 @@
+{
+  "project_info": {
+    "project_number": "669903110693",
+    "firebase_url": "https://clearpet-433c4-default-rtdb.firebaseio.com",
+    "project_id": "clearpet-433c4",
+    "storage_bucket": "clearpet-433c4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669903110693:android:6f486bdf099549a82e75cc",
+        "android_client_info": {
+          "package_name": "com.biosense.iot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669903110693-fndrghk97h821n5o2u2ivr3to34otin9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.biosense.iot",
+            "certificate_hash": "acf4f6d13cd151af5276f00a10b11d1f1763c4b1"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDoeoE7adMYNwZHDDqf4jpD8U9jvB66Fnc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669903110693-3f1lt6ci39go17j1hsutaeabrt36utq0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
