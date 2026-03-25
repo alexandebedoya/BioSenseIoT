@@ -1,6 +1,6 @@
 import { DiagnosticResponse } from './types';
 
-const API_BASE_URL = 'https://biosense-iot-production.up.railway.app/api';
+const API_BASE_URL = 'https://biosenseiot-production.up.railway.app/api';
 
 export class SensorService {
   /**

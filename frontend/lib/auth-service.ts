@@ -11,7 +11,7 @@ if (!Capacitor.isNativePlatform()) {
   });
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://biosense-iot-production.up.railway.app';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://biosenseiot-production.up.railway.app';
 
 export class AuthService {
   
