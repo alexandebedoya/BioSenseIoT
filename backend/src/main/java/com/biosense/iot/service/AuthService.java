@@ -109,26 +109,34 @@ public class AuthService {
     }
 
     /**
-     * Realiza un Upsert (Update or Insert) basado en el google_id.
-     * Si el email cambia en Google, se actualiza en nuestra DB.
+     * Realiza un Upsert (Update or Insert) basado en el google_id o el email.
+     * Si el usuario ya existe por email (registro manual), se enlaza con su google_id.
      */
     private Mono<User> processUserUpsert(String googleId, String email, String name) {
         return userRepository.findByGoogleId(googleId)
+                .switchIfEmpty(userRepository.findByEmail(email)) // Si no lo halla por Google ID, busca por Email
                 .flatMap(existingUser -> {
                     boolean needsUpdate = false;
+                    
+                    // Si el usuario existía pero no tenía Google ID (registro manual previo), lo enlazamos
+                    if (existingUser.getGoogleId() == null) {
+                        existingUser.setGoogleId(googleId);
+                        needsUpdate = true;
+                    }
+                    
+                    // Sincronizar email si ha cambiado en Google
                     if (!existingUser.getEmail().equals(email)) {
                         existingUser.setEmail(email);
                         needsUpdate = true;
                     }
+                    
+                    // Sincronizar nombre si ha cambiado
                     if (name != null && !name.equals(existingUser.getFullName())) {
                         existingUser.setFullName(name);
                         needsUpdate = true;
                     }
                     
-                    if (needsUpdate) {
-                        return userRepository.save(existingUser);
-                    }
-                    return Mono.just(existingUser);
+                    return needsUpdate ? userRepository.save(existingUser) : Mono.just(existingUser);
                 })
                 .switchIfEmpty(userRepository.save(User.builder()
                         .googleId(googleId)
