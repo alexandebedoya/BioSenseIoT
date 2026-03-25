@@ -1,5 +1,6 @@
 -- 1. Users table
-CREATE TABLE IF NOT EXISTS users (
+DROP TABLE IF EXISTS users CASCADE;
+CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     full_name VARCHAR(255),
@@ -9,14 +10,16 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- 2. Health conditions master table
-CREATE TABLE IF NOT EXISTS health_conditions (
+DROP TABLE IF EXISTS health_conditions CASCADE;
+CREATE TABLE health_conditions (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT
 );
 
 -- 3. Mapping users to their health conditions (many-to-many)
-CREATE TABLE IF NOT EXISTS user_health_mapping (
+DROP TABLE IF EXISTS user_health_mapping CASCADE;
+CREATE TABLE user_health_mapping (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     condition_id INTEGER NOT NULL REFERENCES health_conditions(id) ON DELETE CASCADE,
@@ -24,7 +27,8 @@ CREATE TABLE IF NOT EXISTS user_health_mapping (
 );
 
 -- 4. Pets table
-CREATE TABLE IF NOT EXISTS pets (
+DROP TABLE IF EXISTS pets CASCADE;
+CREATE TABLE pets (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
@@ -35,7 +39,8 @@ CREATE TABLE IF NOT EXISTS pets (
 );
 
 -- 5. Devices table
-CREATE TABLE IF NOT EXISTS devices (
+DROP TABLE IF EXISTS devices CASCADE;
+CREATE TABLE devices (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     mac_address VARCHAR(17) UNIQUE NOT NULL,
@@ -44,7 +49,8 @@ CREATE TABLE IF NOT EXISTS devices (
 );
 
 -- 6. Sensor readings table (Optimized for time-series)
-CREATE TABLE IF NOT EXISTS sensor_readings (
+DROP TABLE IF EXISTS sensor_readings CASCADE;
+CREATE TABLE sensor_readings (
     id BIGSERIAL PRIMARY KEY,
     device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
     mq4_value DOUBLE PRECISION NOT NULL, -- CH4/Natural Gas
@@ -54,7 +60,8 @@ CREATE TABLE IF NOT EXISTS sensor_readings (
 );
 
 -- 7. AI Diagnostics results
-CREATE TABLE IF NOT EXISTS ai_diagnostics (
+DROP TABLE IF EXISTS ai_diagnostics CASCADE;
+CREATE TABLE ai_diagnostics (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     reading_id BIGINT NOT NULL REFERENCES sensor_readings(id) ON DELETE CASCADE,
