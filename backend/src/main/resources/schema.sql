@@ -1,5 +1,17 @@
--- 1. Users table
+-- BioSense IoT - Clean Initialization Script
+
+-- 1. DROP TABLES (Ordered by dependency to avoid foreign key violations)
+DROP TABLE IF EXISTS ai_diagnostics CASCADE;
+DROP TABLE IF EXISTS sensor_readings CASCADE;
+DROP TABLE IF EXISTS devices CASCADE;
+DROP TABLE IF EXISTS pets CASCADE;
+DROP TABLE IF EXISTS user_health_mapping CASCADE;
+DROP TABLE IF EXISTS health_conditions CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+
+-- 2. CREATE TABLES (Ordered by dependency)
+
+-- Users table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -9,16 +21,14 @@ CREATE TABLE users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Health conditions master table
-DROP TABLE IF EXISTS health_conditions CASCADE;
+-- Health conditions master table
 CREATE TABLE health_conditions (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT
 );
 
--- 3. Mapping users to their health conditions (many-to-many)
-DROP TABLE IF EXISTS user_health_mapping CASCADE;
+-- Mapping users to their health conditions (many-to-many)
 CREATE TABLE user_health_mapping (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -26,8 +36,7 @@ CREATE TABLE user_health_mapping (
     UNIQUE(user_id, condition_id)
 );
 
--- 4. Pets table
-DROP TABLE IF EXISTS pets CASCADE;
+-- Pets table
 CREATE TABLE pets (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -38,8 +47,7 @@ CREATE TABLE pets (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. Devices table
-DROP TABLE IF EXISTS devices CASCADE;
+-- Devices table
 CREATE TABLE devices (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -48,8 +56,7 @@ CREATE TABLE devices (
     last_seen TIMESTAMP WITH TIME ZONE
 );
 
--- 6. Sensor readings table (Optimized for time-series)
-DROP TABLE IF EXISTS sensor_readings CASCADE;
+-- Sensor readings table (Optimized for time-series)
 CREATE TABLE sensor_readings (
     id BIGSERIAL PRIMARY KEY,
     device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
@@ -59,8 +66,7 @@ CREATE TABLE sensor_readings (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
--- 7. AI Diagnostics results
-DROP TABLE IF EXISTS ai_diagnostics CASCADE;
+-- AI Diagnostics results
 CREATE TABLE ai_diagnostics (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -71,9 +77,8 @@ CREATE TABLE ai_diagnostics (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-
--- Indexes for performance
-CREATE INDEX IF NOT EXISTS idx_sensor_readings_device_id ON sensor_readings(device_id);
-CREATE INDEX IF NOT EXISTS idx_sensor_readings_timestamp ON sensor_readings(timestamp DESC);
-CREATE INDEX IF NOT EXISTS idx_ai_diagnostics_user_id ON ai_diagnostics(user_id);
-CREATE INDEX IF NOT EXISTS idx_pets_user_id ON pets(user_id);
+-- 3. INDEXES
+CREATE INDEX idx_sensor_readings_device_id ON sensor_readings(device_id);
+CREATE INDEX idx_sensor_readings_timestamp ON sensor_readings(timestamp DESC);
+CREATE INDEX idx_ai_diagnostics_user_id ON ai_diagnostics(user_id);
+CREATE INDEX idx_pets_user_id ON pets(user_id);
