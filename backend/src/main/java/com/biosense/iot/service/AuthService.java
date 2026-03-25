@@ -17,21 +17,59 @@ import reactor.core.scheduler.Schedulers;
 import java.time.Instant;
 import java.util.Collections;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final GoogleIdTokenVerifier verifier;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthService(UserRepository userRepository, 
                        JwtService jwtService, 
-                       @Value("${google.client.id}") String clientId) {
+                       @Value("${google.client.id}") String clientId,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
         this.verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
                 .setAudience(Collections.singletonList(clientId))
                 .build();
+    }
+
+    /**
+     * Registro manual con email y password.
+     */
+    public Mono<AuthResponse> registerManual(String email, String password, String name) {
+        return userRepository.findByEmail(email)
+                .flatMap(u -> Mono.<User>error(new AuthException("El usuario ya existe")))
+                .switchIfEmpty(userRepository.save(User.builder()
+                        .email(email)
+                        .password(passwordEncoder.encode(password))
+                        .fullName(name)
+                        .createdAt(Instant.now())
+                        .build()))
+                .map(user -> AuthResponse.builder()
+                        .token(jwtService.generateToken(user.getEmail()))
+                        .email(user.getEmail())
+                        .fullName(user.getFullName())
+                        .build());
+    }
+
+    /**
+     * Login manual con email y password.
+     */
+    public Mono<AuthResponse> loginManual(String email, String password) {
+        return userRepository.findByEmail(email)
+                .filter(user -> user.getPassword() != null && passwordEncoder.matches(password, user.getPassword()))
+                .switchIfEmpty(Mono.error(new AuthException("Credenciales inválidas")))
+                .map(user -> AuthResponse.builder()
+                        .token(jwtService.generateToken(user.getEmail()))
+                        .email(user.getEmail())
+                        .fullName(user.getFullName())
+                        .build());
     }
 
     /**

@@ -20,5 +20,6 @@ public class User {
     private String email;
     private String fullName;
     private String googleId;
+    private String password;
     private Instant createdAt;
 }

@@ -10,12 +10,35 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
+import com.biosense.iot.dto.AuthRequest;
+import com.biosense.iot.exception.AuthException;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
+
+    /**
+     * Endpoint para registro manual con Email y Password.
+     */
+    @PostMapping("/register")
+    public Mono<ResponseEntity<AuthResponse>> registerManual(@RequestBody AuthRequest request) {
+        return authService.registerManual(request.getEmail(), request.getPassword(), request.getFullName())
+                .map(ResponseEntity::ok)
+                .onErrorResume(AuthException.class, e -> Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).build()));
+    }
+
+    /**
+     * Endpoint para login manual con Email y Password.
+     */
+    @PostMapping("/login")
+    public Mono<ResponseEntity<AuthResponse>> loginManual(@RequestBody AuthRequest request) {
+        return authService.loginManual(request.getEmail(), request.getPassword())
+                .map(ResponseEntity::ok)
+                .onErrorResume(AuthException.class, e -> Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
+    }
 
     /**
      * Endpoint para intercambiar el idToken de Google por un JWT local.
