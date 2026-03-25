@@ -27,18 +27,21 @@ public class AuthService {
     private final GoogleIdTokenVerifier verifier;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository, 
-                       JwtService jwtService, 
-                       @Value("${google.client.id}") String clientId,
+    public AuthService(UserRepository userRepository,
+                       JwtService jwtService,
+                       @Value("${google.client.ids}") String clientIds,
                        PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
+
+        // Convertimos la cadena separada por comas en una lista
+        java.util.List<String> audiences = java.util.Arrays.asList(clientIds.split(","));
+
         this.verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                .setAudience(Collections.singletonList(clientId))
+                .setAudience(audiences)
                 .build();
     }
-
     /**
      * Registro manual con email y password.
      */
