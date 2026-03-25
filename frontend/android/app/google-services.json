@@ -19,13 +19,13 @@
           "client_type": 1,
           "android_info": {
             "package_name": "com.biosense.iot",
-            "certificate_hash": "914d34832b6945f6cb5eea42aae8622835a2110d"
+            "certificate_hash": "9f002335041600e3d1732fff0c1f07e5223f0a09"
           }
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDoeoE7adMYNwZHDDqf4jpD8U9jvB66Fnc"
+          "current_key": "AIzaSyCpLyjA5iaM4iQ3N9F8tuw0vzGrFhjR_N4"
         }
       ],
       "services": {
