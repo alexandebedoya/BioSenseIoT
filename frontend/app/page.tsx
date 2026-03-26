@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { LoginScreen } from "@/components/iot/premium/login-screen"
 import { AppHeader } from "@/components/iot/premium/app-header"
 import { AppSidebar } from "@/components/iot/premium/app-sidebar"
@@ -13,14 +13,20 @@ import { SensorsView } from "@/components/iot/premium/views/sensors-view"
 import { RecommendationsView } from "@/components/iot/premium/views/recommendations-view"
 import { ProfileView } from "@/components/iot/premium/views/profile-view"
 import { useSensorData } from "@/hooks/use-sensor-data"
+import { AuthService } from "@/lib/auth-service"
 
 type ViewType = "dashboard" | "monitoreo" | "analisis" | "alertas" | "sensores" | "recomendaciones" | "perfil"
 
 export default function AirQualityApp() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [currentView, setCurrentView] = useState<ViewType>("dashboard")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { data } = useSensorData()
+
+  useEffect(() => {
+    // Verificar si ya hay una sesión activa
+    setIsAuthenticated(AuthService.isAuthenticated())
+  }, [])
 
   // Login handler
   const handleLogin = () => {
@@ -29,8 +35,14 @@ export default function AirQualityApp() {
 
   // Logout handler
   const handleLogout = () => {
+    AuthService.logout()
     setIsAuthenticated(false)
     setSidebarOpen(false)
+  }
+
+  // Prevent flicker while checking auth
+  if (isAuthenticated === null) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">Cargando...</div>
   }
 
   // If not authenticated, show login

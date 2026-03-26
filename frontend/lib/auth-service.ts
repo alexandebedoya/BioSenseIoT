@@ -89,4 +89,15 @@ export class AuthService {
     localStorage.removeItem('auth_token');
     GoogleAuth.signOut();
   }
+
+  static getToken(): string | null {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('auth_token');
+    }
+    return null;
+  }
+
+  static isAuthenticated(): boolean {
+    return !!this.getToken();
+  }
 }
