@@ -2,14 +2,13 @@ import { Capacitor } from '@capacitor/core';
 import { AuthResponse } from './types';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
-// Inicializar GoogleAuth con tu Client ID real
-if (!Capacitor.isNativePlatform()) {
-  GoogleAuth.initialize({
-    clientId: '669903110693-3f1lt6ci39go17j1hsutaeabrt36utq0.apps.googleusercontent.com',
-    scopes: ['profile', 'email'],
-    grantOfflineAccess: true,
-  });
-}
+// Inicializar GoogleAuth con el Client ID de tipo WEB (serverClientId)
+// En Capacitor Android, este ID se usa para obtener el idToken que enviamos al backend.
+GoogleAuth.initialize({
+  clientId: '669903110693-3f1lt6ci39go17j1hsutaeabrt36utq0.apps.googleusercontent.com',
+  scopes: ['profile', 'email'],
+  grantOfflineAccess: true,
+});
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://biosenseiot-production.up.railway.app';
 
