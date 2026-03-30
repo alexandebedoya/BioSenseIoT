@@ -19,7 +19,7 @@ export interface UserProfile {
 }
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
   email: string;
   fullName: string;
 }

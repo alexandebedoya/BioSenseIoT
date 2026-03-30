@@ -4,4 +4,6 @@
     <string name="title_activity_main">BioSense IoT</string>
     <string name="package_name">com.biosense.iot</string>
     <string name="custom_url_scheme">com.biosense.iot</string>
+    <string name="server_client_id">669903110693-3f1lt6ci39go17j1hsutaeabrt36utq0.apps.googleusercontent.com</string>
+
 </resources>

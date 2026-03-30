@@ -15,7 +15,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Instant;
-import java.util.Collections;
+import java.util.List;
+import java.util.Arrays;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -28,20 +29,31 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     public AuthService(UserRepository userRepository,
-                       JwtService jwtService,
-                       @Value("${google.client.ids}") String clientIds,
-                       PasswordEncoder passwordEncoder) {
+            JwtService jwtService,
+            @Value("${GOOGLE_CLIENT_ID}") String clientIds,
+            PasswordEncoder passwordEncoder) {
+
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
 
-        // Convertimos la cadena separada por comas en una lista
-        java.util.List<String> audiences = java.util.Arrays.asList(clientIds.split(","));
+        // 🔍 DEBUG (puedes quitarlo después)
+        System.out.println("CLIENT IDS RAW: " + clientIds);
 
-        this.verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+        // ✅ Parse correcto (elimina espacios)
+        List<String> audiences = Arrays.stream(clientIds.split(","))
+                .map(String::trim)
+                .toList();
+
+        System.out.println("CLIENT IDS PARSED: " + audiences);
+
+        this.verifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(),
+                new GsonFactory())
                 .setAudience(audiences)
                 .build();
     }
+
     /**
      * Registro manual con email y password.
      */
@@ -55,7 +67,7 @@ public class AuthService {
                         .createdAt(Instant.now())
                         .build()))
                 .map(user -> AuthResponse.builder()
-                        .token(jwtService.generateToken(user.getEmail()))
+                        .accessToken(jwtService.generateToken(user.getEmail()))
                         .email(user.getEmail())
                         .fullName(user.getFullName())
                         .build());
@@ -69,39 +81,54 @@ public class AuthService {
                 .filter(user -> user.getPassword() != null && passwordEncoder.matches(password, user.getPassword()))
                 .switchIfEmpty(Mono.error(new AuthException("Credenciales inválidas")))
                 .map(user -> AuthResponse.builder()
-                        .token(jwtService.generateToken(user.getEmail()))
+                        .accessToken(jwtService.generateToken(user.getEmail()))
                         .email(user.getEmail())
                         .fullName(user.getFullName())
                         .build());
     }
 
     /**
-     * Valida el idToken de Google y realiza el upsert del usuario.
-     * Retorna un AuthResponse con el JWT firmado y datos básicos del usuario.
+     * Login con Google
      */
     public Mono<AuthResponse> authenticateWithGoogle(String idTokenString) {
+
         return Mono.fromCallable(() -> {
-                    try {
-                        return verifier.verify(idTokenString);
-                    } catch (Exception e) {
-                        throw new AuthException("Error al validar el token de Google: " + e.getMessage());
-                    }
-                })
+            try {
+                System.out.println("TOKEN RECIBIDO: " + idTokenString);
+
+                GoogleIdToken token = verifier.verify(idTokenString);
+
+                if (token == null) {
+                    System.out.println("❌ TOKEN INVALIDO (verify returned null)");
+                }
+
+                return token;
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new AuthException("Error al validar el token de Google: " + e.getMessage());
+            }
+        })
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(idToken -> {
+
                     if (idToken == null) {
                         return Mono.error(new AuthException("Token de Google inválido o expirado"));
                     }
-                    
+
                     GoogleIdToken.Payload payload = idToken.getPayload();
-                    // 'sub' es el ID único e inmutable del usuario en Google
-                    String googleId = payload.getSubject(); 
+
+                    String googleId = payload.getSubject();
                     String email = payload.getEmail();
                     String name = (String) payload.get("name");
 
+                    System.out.println("✅ EMAIL: " + email);
+                    System.out.println("✅ AUD: " + payload.getAudience());
+                    System.out.println("✅ ISS: " + payload.getIssuer());
+
                     return processUserUpsert(googleId, email, name)
                             .map(user -> AuthResponse.builder()
-                                    .token(jwtService.generateToken(user.getEmail()))
+                                    .accessToken(jwtService.generateToken(user.getEmail()))
                                     .email(user.getEmail())
                                     .fullName(user.getFullName())
                                     .build());
@@ -109,34 +136,34 @@ public class AuthService {
     }
 
     /**
-     * Realiza un Upsert (Update or Insert) basado en el google_id o el email.
-     * Si el usuario ya existe por email (registro manual), se enlaza con su google_id.
+     * Upsert usuario
      */
     private Mono<User> processUserUpsert(String googleId, String email, String name) {
+
         return userRepository.findByGoogleId(googleId)
-                .switchIfEmpty(userRepository.findByEmail(email)) // Si no lo halla por Google ID, busca por Email
+                .switchIfEmpty(userRepository.findByEmail(email))
                 .flatMap(existingUser -> {
+
                     boolean needsUpdate = false;
-                    
-                    // Si el usuario existía pero no tenía Google ID (registro manual previo), lo enlazamos
+
                     if (existingUser.getGoogleId() == null) {
                         existingUser.setGoogleId(googleId);
                         needsUpdate = true;
                     }
-                    
-                    // Sincronizar email si ha cambiado en Google
+
                     if (!existingUser.getEmail().equals(email)) {
                         existingUser.setEmail(email);
                         needsUpdate = true;
                     }
-                    
-                    // Sincronizar nombre si ha cambiado
+
                     if (name != null && !name.equals(existingUser.getFullName())) {
                         existingUser.setFullName(name);
                         needsUpdate = true;
                     }
-                    
-                    return needsUpdate ? userRepository.save(existingUser) : Mono.just(existingUser);
+
+                    return needsUpdate
+                            ? userRepository.save(existingUser)
+                            : Mono.just(existingUser);
                 })
                 .switchIfEmpty(userRepository.save(User.builder()
                         .googleId(googleId)

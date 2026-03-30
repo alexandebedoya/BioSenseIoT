@@ -46,7 +46,7 @@ export class AuthService {
     }
 
     const data: AuthResponse = await response.json();
-    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem('auth_token', data.accessToken);
     return data;
   }
 
@@ -63,7 +63,7 @@ export class AuthService {
     }
 
     const data: AuthResponse = await response.json();
-    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem('auth_token', data.accessToken);
     return data;
   }
 
@@ -80,7 +80,7 @@ export class AuthService {
     }
 
     const data: AuthResponse = await response.json();
-    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem('auth_token', data.accessToken);
     return data;
   }
 

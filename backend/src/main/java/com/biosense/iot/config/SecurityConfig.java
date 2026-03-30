@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -38,6 +39,9 @@ public class SecurityConfig {
             .cors(cors -> cors.disable()) // Handled by CorsWebFilter
             .authorizeExchange(exchanges -> exchanges
                 .pathMatchers("/api/auth/**").permitAll()
+                .pathMatchers(HttpMethod.POST, "/api/sensors/reading").permitAll()
+                .pathMatchers("/api/sensors/**").authenticated()
+                .pathMatchers("/api/devices/**").authenticated()
                 .anyExchange().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
