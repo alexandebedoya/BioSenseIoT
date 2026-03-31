@@ -5,14 +5,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '../../status-indicator'
 import { GaugeChart } from '../../gauge-chart'
 import { SensorCard } from '../../sensor-card'
-import { SensorData, THRESHOLDS } from '@/lib/types'
-import { getRecommendations as getAIRecommendations } from '@/lib/sensor-service'
-import { Wind, Clock, Lightbulb, RefreshCw, Cpu, PlusCircle } from 'lucide-react'
+import { DiagnosticResponse } from '@/lib/types'
+import { Wind, Clock, Lightbulb, RefreshCw, Cpu, PlusCircle, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 interface DashboardViewProps {
-  data: SensorData | null | undefined
+  data: DiagnosticResponse | null | undefined
   isLoading: boolean
   isError: boolean
   onNavigateToProfile?: () => void
@@ -52,7 +51,7 @@ export function DashboardView({
   }
 
   // ✅ SOLUCIÓN AL BLOQUEO: Si no hay datos, mostrar bienvenida en lugar de error
-  if (!data || !data.mq4) {
+  if (!data) {
     return (
       <div className="p-4 space-y-6 animate-in fade-in duration-700">
         <Card className="border-dashed border-2 bg-primary/5">
@@ -79,29 +78,38 @@ export function DashboardView({
     );
   }
 
-  const recommendations = getAIRecommendations(data);
-  const nivel = data.nivel || 'NORMAL';
+  const nivel = data.severity || 'LOW';
+  const severityMap = {
+    'LOW': 'NORMAL',
+    'MEDIUM': 'PRECAUCION',
+    'HIGH': 'PELIGRO',
+    'CRITICAL': 'CRÍTICO'
+  };
 
   return (
     <div className="p-4 space-y-4 animate-in slide-in-from-bottom-2 duration-500">
       <Card className={cn(
         'relative overflow-hidden border-none shadow-2xl transition-all duration-1000 rounded-3xl',
-        nivel === 'NORMAL' && 'bg-emerald-50 text-emerald-900',
-        nivel === 'PRECAUCION' && 'bg-amber-50 text-amber-900',
-        nivel === 'PELIGRO' && 'bg-red-50 text-red-900'
+        nivel === 'LOW' && 'bg-emerald-50 text-emerald-900',
+        nivel === 'MEDIUM' && 'bg-amber-50 text-amber-900',
+        nivel === 'HIGH' && 'bg-orange-50 text-orange-900',
+        nivel === 'CRITICAL' && 'bg-red-50 text-red-900'
       )}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-widest opacity-60">Calidad del Aire</span>
-            <StatusBadge level={nivel} />
+            <span className="text-xs font-bold uppercase tracking-widest opacity-60">Diagnóstico IA</span>
+            <StatusBadge level={severityMap[nivel]} />
           </div>
-          <CardTitle className="text-3xl font-black">{nivel}</CardTitle>
+          <CardTitle className="text-2xl font-black tracking-tight leading-tight">
+            {data.diagnosticText || "Analizando calidad del aire..."}
+          </CardTitle>
         </CardHeader>
         
         <CardContent>
-          <div className="flex justify-around py-6">
-            <GaugeChart value={data.mq4} sensor="mq4" label="MQ-4" />
-            <GaugeChart value={data.mq7} sensor="mq7" label="MQ-7" />
+          <div className="flex justify-around items-end py-6 gap-2">
+            <GaugeChart value={data.mq4} sensor="mq4" label="CH4 (MQ4)" />
+            <GaugeChart value={data.mq7} sensor="mq7" label="CO (MQ7)" />
+            <GaugeChart value={data.mq135} sensor="mq135" label="Aire (MQ135)" />
           </div>
           <div className="text-center text-[10px] opacity-50 font-medium">
             <Clock className="inline h-3 w-3 mr-1" />
@@ -110,24 +118,38 @@ export function DashboardView({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3">
-        <SensorCard sensorId="mq4" value={data.mq4} trend="stable" />
-        <SensorCard sensorId="mq7" value={data.mq7} trend="stable" />
-      </div>
-
-      {recommendations && recommendations.length > 0 && (
-        <Card className="border-none bg-slate-900 text-white rounded-3xl p-1">
-          <CardContent className="p-4 flex items-start gap-3">
-            <div className="p-2 bg-white/10 rounded-xl">
-              <Lightbulb size={20} className="text-amber-400" />
+      <div className="grid grid-cols-1 gap-3">
+        <Card className="border-none bg-slate-900 text-white rounded-3xl p-1 shadow-lg">
+          <CardContent className="p-4 flex items-start gap-4">
+            <div className="p-3 bg-white/10 rounded-2xl border border-white/5">
+              <ShieldCheck size={24} className="text-emerald-400" />
             </div>
             <div>
-              <p className="text-xs font-bold text-white/60 mb-1">RECOMENDACIÓN</p>
-              <p className="text-sm leading-relaxed">{recommendations[0]}</p>
+              <p className="text-[10px] font-bold text-white/40 tracking-widest uppercase mb-1">Recomendación IA</p>
+              <p className="text-sm leading-relaxed font-medium">{data.recommendation}</p>
             </div>
           </CardContent>
         </Card>
-      )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <SensorCard sensorId="mq4" value={data.mq4} trend="stable" />
+        <SensorCard sensorId="mq7" value={data.mq7} trend="stable" />
+        <SensorCard sensorId="mq135" value={data.mq135} trend="stable" />
+      </div>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="p-4 space-y-4">
+      <Skeleton className="h-64 w-full rounded-[40px]" />
+      <div className="grid grid-cols-3 gap-2">
+        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-24 rounded-2xl" />
+      </div>
     </div>
   );
 }
