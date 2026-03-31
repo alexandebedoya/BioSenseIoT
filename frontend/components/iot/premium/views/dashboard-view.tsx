@@ -2,9 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { StatusBadge } from '../status-indicator'
-import { GaugeChart } from '../gauge-chart'
-import { SensorCard } from '../sensor-card'
+import { StatusBadge } from '../../status-indicator'
+import { GaugeChart } from '../../gauge-chart'
+import { SensorCard } from '../../sensor-card'
 import { SensorData, THRESHOLDS } from '@/lib/types'
 import { getRecommendations as getAIRecommendations } from '@/lib/sensor-service'
 import { Wind, Clock, Lightbulb, RefreshCw, Cpu, PlusCircle } from 'lucide-react'
