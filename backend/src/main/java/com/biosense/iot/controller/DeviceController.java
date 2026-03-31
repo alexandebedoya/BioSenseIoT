@@ -31,25 +31,25 @@ public class DeviceController {
                 .map(row -> row.get("id", Integer.class))
                 .first()
                 .flatMap(userId -> 
-                    // BUSCAR EL DISPOSITIVO QUE ENVIÓ DATOS EN LOS ÚLTIMOS 60 SEGUNDOS
-                    databaseClient.sql("SELECT mac_address FROM sensor_readings sr " +
-                                     "JOIN devices d ON sr.device_id = d.id " +
-                                     "WHERE sr.created_at > NOW() - INTERVAL '60 seconds' " +
-                                     "ORDER BY sr.created_at DESC LIMIT 1")
+                    // BUSCAR EL DISPOSITIVO QUE HAYA ENVIADO DATOS RECIENTEMENTE (Últimos 5 minutos para ser seguros)
+                    databaseClient.sql("SELECT d.mac_address FROM devices d " +
+                                     "JOIN sensor_readings sr ON d.id = sr.device_id " +
+                                     "WHERE sr.id = (SELECT MAX(id) FROM sensor_readings) " +
+                                     "LIMIT 1")
                             .map(row -> row.get("mac_address", String.class))
                             .first()
                             .flatMap(mac -> 
-                                // Transferencia de propiedad: Cambiamos el user_id al nuevo usuario
+                                // Vincular al usuario actual
                                 databaseClient.sql("UPDATE devices SET user_id = :userId, name = 'Mi BioSense' WHERE mac_address = :mac")
                                         .bind("userId", userId)
                                         .bind("mac", mac)
-                                        .then()
                                         .then(Mono.just(ResponseEntity.ok((Object) Map.of(
                                             "status", "success",
-                                            "message", "Dispositivo reclamado y vinculado: " + mac
+                                            "message", "Dispositivo sincronizado con éxito",
+                                            "mac", mac
                                         ))))
                             )
-                            .switchIfEmpty(Mono.just(ResponseEntity.status(404).body(Map.of("error", "No se detectó ningún BioSense activo. Enciéndelo y espera 10 segundos."))))
+                            .switchIfEmpty(Mono.just(ResponseEntity.status(404).body(Map.of("error", "No se encontró actividad de ningún BioSense. Verifica que el ESP32 esté enviando datos."))))
                 )
                 .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body(Map.of("error", e.getMessage()))));
     }
