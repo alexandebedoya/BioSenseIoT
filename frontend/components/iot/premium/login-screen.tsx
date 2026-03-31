@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Wind, Mail, Lock, Eye, EyeOff, Loader2, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,7 @@ interface LoginScreenProps {
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
+  const [mounted, setMounted] = useState(false)
   const [isRegistering, setIsRegistering] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -21,9 +22,17 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
 
+  // Asegurar hidratación correcta en dispositivos móviles
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
+
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true)
     try {
+      console.log("Iniciando Google Login...")
       await AuthService.loginWithGoogle()
       toast.success("Sesión iniciada correctamente")
       onLogin()
@@ -37,6 +46,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!email || !password) {
+      toast.error("Por favor completa los campos")
+      return
+    }
+
     setIsLoading(true)
     try {
       if (isRegistering) {
@@ -55,153 +69,99 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-background via-background to-muted/30">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
-      </div>
-      
-      <div className="relative w-full max-w-md animate-scale-in">
-        <div className="glass rounded-3xl p-8 shadow-premium border border-border/50">
-          <div className="flex flex-col items-center mb-8">
-            <div className="relative mb-6">
-              <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
-              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-                <Wind className="w-10 h-10 text-primary-foreground" strokeWidth={1.5} />
-              </div>
-            </div>
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight text-balance text-center">
-              {isRegistering ? "Crea tu cuenta" : "Monitoreo Ambiental IoT"}
-            </h1>
-            <p className="text-muted-foreground mt-2 text-sm text-center">
-              {isRegistering ? "Únete a la red de monitoreo" : "Calidad del aire en tiempo real"}
-            </p>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
+      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
+            <Wind className="w-10 h-10 text-white" />
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {isRegistering && (
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                  <UserPlus className="w-5 h-5" />
-                </div>
-                <Input
-                  type="text"
-                  placeholder="Nombre completo"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="pl-12 h-14 rounded-2xl bg-secondary/50 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                  required={isRegistering}
-                />
-              </div>
-            )}
-
-            <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                <Mail className="w-5 h-5" />
-              </div>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-12 h-14 rounded-2xl bg-secondary/50 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                required
-              />
-            </div>
-
-            <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                <Lock className="w-5 h-5" />
-              </div>
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 pr-12 h-14 rounded-2xl bg-secondary/50 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-
-            {!isRegistering && (
-              <div className="text-right">
-                <button type="button" className="text-sm text-primary hover:text-primary/80 transition-colors">
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className={cn(
-                "w-full h-14 rounded-2xl text-base font-medium transition-all duration-300",
-                "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
-                "shadow-lg hover:shadow-xl hover:shadow-primary/20",
-                "disabled:opacity-70"
-              )}
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                isRegistering ? "Registrarse" : "Iniciar Sesión"
-              )}
-            </Button>
-          </form>
-
-          <p className="text-center mt-6 text-sm text-muted-foreground">
-            {isRegistering ? "¿Ya tienes cuenta?" : "¿Nuevo?"}{" "}
-            <button 
-              type="button"
-              onClick={() => setIsRegistering(!isRegistering)}
-              className="text-primary font-medium hover:text-primary/80 transition-colors"
-            >
-              {isRegistering ? "Inicia sesión" : "Crea una cuenta"}
-            </button>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {isRegistering ? "Crear cuenta" : "Bienvenido a BioSense"}
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            {isRegistering ? "Completa tus datos" : "Ingresa tus credenciales"}
           </p>
+        </div>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border/50" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-4 text-xs text-muted-foreground bg-card">o continúa con</span>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {isRegistering && (
+            <Input
+              type="text"
+              placeholder="Nombre completo"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="h-12 rounded-xl"
+              required
+            />
+          )}
+          <Input
+            type="email"
+            placeholder="Correo electrónico"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-12 rounded-xl"
+            required
+          />
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-12 rounded-xl"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 text-slate-400"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
           <Button
-            type="button"
-            variant="outline"
-            disabled={isGoogleLoading}
-            className="w-full h-14 rounded-2xl border-border/50 hover:bg-secondary/50 transition-all"
-            onClick={handleGoogleLogin}
+            type="submit"
+            disabled={isLoading}
+            className="w-full h-12 rounded-xl text-base font-semibold shadow-md"
           >
-            {isGoogleLoading ? (
-              <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-            ) : (
-              <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-              </svg>
-            )}
-            {isGoogleLoading ? "Cargando..." : "Continuar con Google"}
+            {isLoading ? <Loader2 className="animate-spin" /> : (isRegistering ? "Registrarse" : "Entrar")}
           </Button>
+        </form>
 
-          <div className="text-center mt-6 text-xs text-muted-foreground leading-relaxed">
-            Al continuar, aceptas nuestros{" "}
-            <button type="button" className="text-primary hover:underline">Términos</button> y{" "}
-            <button type="button" className="text-primary hover:underline">Política de Privacidad</button>
-          </div>
+        <div className="relative py-2">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+          <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400">O continuar con</span></div>
         </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isGoogleLoading}
+          onClick={handleGoogleLogin}
+          className="w-full h-12 rounded-xl border-slate-200 hover:bg-slate-50"
+        >
+          {isGoogleLoading ? <Loader2 className="animate-spin mr-2" /> : (
+            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+              <path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115z" />
+              <path fill="#FBBC05" d="M16.04 18.013c-1.09.693-2.43 1.078-3.84 1.078-2.618 0-4.836-1.745-5.618-4.135l-4.104 3.142C4.4 21.302 8.01 24 12 24c3.055 0 5.782-1.073 7.736-2.864l-3.696-3.123z" />
+              <path fill="#4285F4" d="M19.736 21.136C22.25 18.823 24 15.532 24 12c0-.85-.09-1.68-.26-2.48H12v4.83h6.918a5.92 5.92 0 0 1-2.574 3.886l3.392 2.9z" />
+              <path fill="#34A853" d="M1.24 6.65L5.266 9.765C5.72 8.414 6.845 7.36 8.21 6.883l3.79-2.9C9.79 3.018 7.6 2.305 5.266 2.305 3.323 2.305 1.545 3.15.24 4.54l1 2.11z" />
+            </svg>
+          )}
+          Google
+        </Button>
+
+        <p className="text-center text-sm text-slate-500">
+          {isRegistering ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
+          <button 
+            type="button" 
+            onClick={() => setIsRegistering(!isRegistering)}
+            className="text-primary font-bold hover:underline"
+          >
+            {isRegistering ? "Inicia sesión" : "Regístrate"}
+          </button>
+        </p>
       </div>
     </div>
   )

@@ -18,13 +18,14 @@ import { AuthService } from "@/lib/auth-service"
 type ViewType = "dashboard" | "monitoreo" | "analisis" | "alertas" | "sensores" | "recomendaciones" | "perfil"
 
 export default function AirQualityApp() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [mounted, setMounted] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
   const [currentView, setCurrentView] = useState<ViewType>("dashboard")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { data } = useSensorData()
 
   useEffect(() => {
-    // Verificar si ya hay una sesión activa
+    setMounted(true)
     setIsAuthenticated(AuthService.isAuthenticated())
   }, [])
 
@@ -40,9 +41,9 @@ export default function AirQualityApp() {
     setSidebarOpen(false)
   }
 
-  // Prevent flicker while checking auth
-  if (isAuthenticated === null) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">Cargando...</div>
+  // Prevent flicker and hydration errors
+  if (!mounted) {
+    return <div className="min-h-screen bg-background" />
   }
 
   // If not authenticated, show login
