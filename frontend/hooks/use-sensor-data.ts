@@ -2,17 +2,35 @@
 
 import useSWR from 'swr'
 import { SensorData } from '@/lib/types'
+import { AuthService } from '@/lib/auth-service'
 
-const fetcher = (url: string) => fetch(url).then(res => res.json())
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://biosenseiot-production.up.railway.app'
+
+const fetcher = async (url: string) => {
+  const token = AuthService.getToken();
+  if (!token) return null;
+
+  const res = await fetch(`${API_URL}${url}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!res.ok) {
+    if (res.status === 404) return null; // No hay lecturas aún
+    throw new Error('Error al cargar datos de sensores');
+  }
+
+  return res.json();
+}
 
 export function useSensorData() {
-  const { data, error, isLoading, mutate } = useSWR<SensorData>(
-    '/api/sensores/latest',
+  const { data, error, isLoading, mutate } = useSWR<SensorData | null>(
+    '/api/sensors/latest',
     fetcher,
     {
-      refreshInterval: 2500, // Update every 2.5 seconds
-      revalidateOnFocus: true,
-      dedupingInterval: 1000
+      refreshInterval: 5000, // 5 segundos para ahorrar batería
+      revalidateOnFocus: true
     }
   )
 

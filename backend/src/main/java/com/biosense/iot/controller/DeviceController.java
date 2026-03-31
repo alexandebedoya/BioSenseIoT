@@ -1,14 +1,10 @@
 package com.biosense.iot.controller;
 
+import com.biosense.iot.config.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -19,40 +15,42 @@ import java.util.Map;
 public class DeviceController {
 
     private final DatabaseClient databaseClient;
+    private final JwtService jwtService;
 
     /**
-     * Endpoint para vincular un dispositivo (basado en MAC) al usuario actual.
+     * Vincula un dispositivo (MAC) al usuario logueado.
      */
     @PostMapping("/link")
-    public Mono<ResponseEntity<Object>> linkDevice(@RequestBody Map<String, String> body) {
-        String macAddress = body.get("macAddress");
+    public Mono<ResponseEntity<Object>> linkDevice(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, String> request) {
         
-        if (macAddress == null || macAddress.isEmpty()) {
-            return Mono.just(ResponseEntity.badRequest().body(Map.of("error", "macAddress is required")));
-        }
+        String token = authHeader.replace("Bearer ", "");
+        String email = jwtService.extractUsername(token);
+        String macAddress = request.get("macAddress");
 
-        return ReactiveSecurityContextHolder.getContext()
-                .map(sc -> (Jwt) sc.getAuthentication().getPrincipal())
-                .flatMap(jwt -> {
-                    String email = jwt.getSubject();
-                    
-                    // 1. Obtener el ID del usuario
-                    return databaseClient.sql("SELECT id FROM users WHERE email = :email")
-                            .bind("email", email)
-                            .map(row -> row.get("id", Integer.class))
-                            .first()
-                            .flatMap(userId -> 
-                                // 2. Actualizar el dispositivo para vincularlo al usuario
-                                // Usamos un Upsert por si el dispositivo no existe aún en la tabla devices
-                                databaseClient.sql("INSERT INTO devices (mac_address, user_id, name) " +
-                                                   "VALUES (:mac, :uid, 'Mi Sensor') " +
-                                                   "ON CONFLICT (mac_address) DO UPDATE SET user_id = :uid")
-                                        .bind("mac", macAddress)
-                                        .bind("uid", userId)
-                                        .fetch().rowsUpdated()
-                            )
-                            .map(updated -> ResponseEntity.ok((Object) Map.of("status", "success", "message", "Dispositivo vinculado correctamente")));
-                })
-                .onErrorResume(e -> Mono.just(ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()))));
+        return databaseClient.sql("SELECT id FROM users WHERE email = :email")
+                .bind("email", email)
+                .map(row -> row.get("id", Integer.class))
+                .first()
+                .flatMap(userId -> 
+                    // Actualizamos el dispositivo para que pertenezca a este usuario
+                    databaseClient.sql("UPDATE devices SET user_id = :userId WHERE mac_address = :mac")
+                            .bind("userId", userId)
+                            .bind("mac", macAddress)
+                            .fetch()
+                            .rowsUpdated()
+                            .flatMap(rows -> {
+                                if (rows == 0) {
+                                    // Si el dispositivo no existe en la DB (nunca ha enviado datos), lo creamos
+                                    return databaseClient.sql("INSERT INTO devices (mac_address, name, user_id) VALUES (:mac, 'Mi BioSense', :userId)")
+                                            .bind("mac", macAddress)
+                                            .bind("userId", userId)
+                                            .then(Mono.just(ResponseEntity.ok((Object) Map.of("message", "Dispositivo creado y vinculado"))));
+                                }
+                                return Mono.just(ResponseEntity.ok((Object) Map.of("message", "Dispositivo vinculado exitosamente")));
+                            })
+                )
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body(Map.of("error", e.getMessage()))));
     }
 }
