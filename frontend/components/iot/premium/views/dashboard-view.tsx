@@ -1,220 +1,145 @@
-"use client"
+'use client'
 
-import { Thermometer, Droplets, Wifi, Clock, RefreshCw } from "lucide-react"
-import { AQIGauge } from "../aqi-gauge"
-import { StatCard } from "../stat-card"
-import { AlertCard } from "../alert-card"
-import { FABButton } from "../fab-button"
-import { 
-  Area, 
-  AreaChart, 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  Tooltip,
-  Legend
-} from "recharts"
-import { Button } from "@/components/ui/button"
-import type { SensorData } from "@/lib/types"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { StatusBadge } from '../status-indicator'
+import { GaugeChart } from '../gauge-chart'
+import { SensorCard } from '../sensor-card'
+import { SensorData, THRESHOLDS } from '@/lib/types'
+import { getRecommendations as getAIRecommendations } from '@/lib/sensor-service'
+import { Wind, Clock, Lightbulb, RefreshCw, Cpu, PlusCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 interface DashboardViewProps {
-  data: SensorData
-  onNavigateToAlerts: () => void
-  onNavigateToRecommendations: () => void
+  data: SensorData | null | undefined
+  isLoading: boolean
+  isError: boolean
+  onNavigateToProfile?: () => void
+  onNavigateToAlerts?: () => void
+  onNavigateToRecommendations?: () => void
 }
 
-// Generate chart data from sensor readings
-function generateChartData() {
-  const now = new Date()
-  return Array.from({ length: 12 }, (_, i) => {
-    const time = new Date(now.getTime() - (11 - i) * 10 * 60 * 1000)
-    return {
-      time: time.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-      CO: 35 + Math.random() * 15,
-      CH4: 25 + Math.random() * 10,
-      COVs: 20 + Math.random() * 8
-    }
-  })
+function formatTime(timestamp?: string): string {
+  if (!timestamp) return 'Sincronizando...';
+  try {
+    return new Date(timestamp).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (e) {
+    return 'Hora no válida';
+  }
 }
 
-export function DashboardView({ data, onNavigateToAlerts, onNavigateToRecommendations }: DashboardViewProps) {
-  const chartData = generateChartData()
-  const aqi = Math.round((data.mq7.value / 50 + data.mq4.value / 100) * 50)
+export function DashboardView({ 
+  data, 
+  isLoading, 
+  isError, 
+  onNavigateToProfile 
+}: DashboardViewProps) {
+  
+  if (isLoading) return <DashboardSkeleton />;
+  
+  if (isError) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+        <RefreshCw className="h-12 w-12 text-red-500 animate-spin" />
+        <h3 className="font-bold text-lg text-slate-800">Error de conexión</h3>
+        <p className="text-sm text-slate-500">No pudimos conectar con el servidor de BioSense.</p>
+      </div>
+    );
+  }
+
+  // ✅ SOLUCIÓN AL BLOQUEO: Si no hay datos, mostrar bienvenida en lugar de error
+  if (!data || !data.mq4) {
+    return (
+      <div className="p-4 space-y-6 animate-in fade-in duration-700">
+        <Card className="border-dashed border-2 bg-primary/5">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center space-y-6">
+            <div className="p-6 bg-white rounded-full shadow-inner shadow-primary/10">
+              <Cpu size={48} className="text-primary animate-pulse" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Bienvenido a BioSense</h3>
+              <p className="text-sm text-slate-500 max-w-[240px] mx-auto leading-relaxed">
+                Tu sistema de monitoreo está listo. Solo falta vincular tu hardware para empezar.
+              </p>
+            </div>
+            <Button 
+              className="h-14 px-8 text-base font-bold shadow-xl shadow-primary/20 rounded-2xl gap-2 active:scale-95 transition-transform"
+              onClick={onNavigateToProfile}
+            >
+              <PlusCircle size={20} />
+              ACTIVAR MI BIOSENSE
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const recommendations = getAIRecommendations(data);
+  const nivel = data.nivel || 'NORMAL';
 
   return (
-    <div className="pb-24">
-      {/* Header Section */}
-      <div className="p-4 pb-0">
-        <h1 className="text-2xl font-bold tracking-tight">Panel Principal</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Monitoreo en tiempo real de calidad del aire
-        </p>
-      </div>
-
-      {/* AQI Card */}
-      <div className="p-4">
-        <div className="bg-card rounded-3xl border border-border/50 p-6 shadow-premium animate-fade-in-up">
-          <h2 className="text-lg font-semibold mb-4 text-center">Indice de Calidad del Aire</h2>
-          <AQIGauge value={aqi} />
-        </div>
-      </div>
-
-      {/* Quick Stats Grid */}
-      <div className="px-4 grid grid-cols-2 gap-3">
-        <StatCard
-          icon={Thermometer}
-          label="Temperatura"
-          value={data.temperature.toFixed(1)}
-          unit="C"
-          status="info"
-          delay={100}
-        />
-        <StatCard
-          icon={Droplets}
-          label="Humedad"
-          value={data.humidity.toFixed(0)}
-          unit="%"
-          status="info"
-          delay={150}
-        />
-        <StatCard
-          icon={Wifi}
-          label="ESP32"
-          value="Conectado"
-          status="safe"
-          delay={200}
-        />
-        <StatCard
-          icon={Clock}
-          label="Ultima Sync"
-          value="Hace 2 min"
-          status="neutral"
-          delay={250}
-        />
-      </div>
-
-      {/* Real-time Chart */}
-      <div className="p-4">
-        <div className="bg-card rounded-3xl border border-border/50 p-4 shadow-premium animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Niveles en Tiempo Real</h3>
-            <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8">
-              <RefreshCw className="w-4 h-4" />
-            </Button>
+    <div className="p-4 space-y-4 animate-in slide-in-from-bottom-2 duration-500">
+      <Card className={cn(
+        'relative overflow-hidden border-none shadow-2xl transition-all duration-1000 rounded-3xl',
+        nivel === 'NORMAL' && 'bg-emerald-50 text-emerald-900',
+        nivel === 'PRECAUCION' && 'bg-amber-50 text-amber-900',
+        nivel === 'PELIGRO' && 'bg-red-50 text-red-900'
+      )}>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-widest opacity-60">Calidad del Aire</span>
+            <StatusBadge level={nivel} />
           </div>
-          
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorCO" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorCH4" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--chart-2)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--chart-2)" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorCOVs" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--chart-3)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--chart-3)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis 
-                  dataKey="time" 
-                  axisLine={false} 
-                  tickLine={false}
-                  tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false}
-                  tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
-                  domain={[0, 60]}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'var(--card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '12px',
-                    fontSize: '12px'
-                  }}
-                />
-                <Legend 
-                  verticalAlign="bottom" 
-                  height={36}
-                  iconType="circle"
-                  iconSize={8}
-                  wrapperStyle={{ fontSize: '11px' }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="CO" 
-                  stroke="var(--chart-1)" 
-                  fillOpacity={1} 
-                  fill="url(#colorCO)"
-                  strokeWidth={2}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="CH4" 
-                  stroke="var(--chart-2)" 
-                  fillOpacity={1} 
-                  fill="url(#colorCH4)"
-                  strokeWidth={2}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="COVs" 
-                  stroke="var(--chart-3)" 
-                  fillOpacity={1} 
-                  fill="url(#colorCOVs)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Active Alerts Preview */}
-      <div className="px-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold">Alertas Activas</h3>
-          <button 
-            onClick={onNavigateToAlerts}
-            className="text-sm text-primary font-medium hover:text-primary/80 transition-colors"
-          >
-            Ver todas
-          </button>
-        </div>
+          <CardTitle className="text-3xl font-black">{nivel}</CardTitle>
+        </CardHeader>
         
-        <div className="space-y-3">
-          <AlertCard
-            id="1"
-            title="Nivel de CO elevado"
-            description="Ventile el area"
-            location="Detectado en cocina"
-            value="45 ppm"
-            time="Hace 5 minutos"
-            severity="moderada"
-            delay={400}
-          />
-          <AlertCard
-            id="2"
-            title="Humedad alta"
-            description="Revise ventilacion"
-            location="Bano principal"
-            value="78%"
-            time="Hace 15 minutos"
-            severity="baja"
-            delay={450}
-          />
-        </div>
+        <CardContent>
+          <div className="flex justify-around py-6">
+            <GaugeChart value={data.mq4} sensor="mq4" label="MQ-4" />
+            <GaugeChart value={data.mq7} sensor="mq7" label="MQ-7" />
+          </div>
+          <div className="text-center text-[10px] opacity-50 font-medium">
+            <Clock className="inline h-3 w-3 mr-1" />
+            Sincronizado: {formatTime(data.timestamp)}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 gap-3">
+        <SensorCard sensorId="mq4" value={data.mq4} trend="stable" />
+        <SensorCard sensorId="mq7" value={data.mq7} trend="stable" />
       </div>
 
-      {/* FAB for AI Recommendations */}
-      <FABButton onClick={onNavigateToRecommendations} />
+      {recommendations && recommendations.length > 0 && (
+        <Card className="border-none bg-slate-900 text-white rounded-3xl p-1">
+          <CardContent className="p-4 flex items-start gap-3">
+            <div className="p-2 bg-white/10 rounded-xl">
+              <Lightbulb size={20} className="text-amber-400" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white/60 mb-1">RECOMENDACIÓN</p>
+              <p className="text-sm leading-relaxed">{recommendations[0]}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
-  )
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="p-4 space-y-4">
+      <Skeleton className="h-64 w-full rounded-[40px]" />
+      <div className="grid grid-cols-2 gap-3">
+        <Skeleton className="h-32 rounded-3xl" />
+        <Skeleton className="h-32 rounded-3xl" />
+      </div>
+    </div>
+  );
 }
