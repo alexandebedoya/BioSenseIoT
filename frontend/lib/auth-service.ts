@@ -17,7 +17,7 @@ if (typeof window !== 'undefined') {
 const API_URL = 'https://biosenseiot-production.up.railway.app';
 
 export class AuthService {
-...
+  
   static async loginWithGoogle(): Promise<AuthResponse> {
     try {
       // Disparar el login nativo o web real del plugin

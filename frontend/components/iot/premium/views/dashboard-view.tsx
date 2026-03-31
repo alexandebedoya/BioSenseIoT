@@ -6,7 +6,7 @@ import { StatusBadge } from '../../status-indicator'
 import { GaugeChart } from '../../gauge-chart'
 import { SensorCard } from '../../sensor-card'
 import { DiagnosticResponse } from '@/lib/types'
-import { Wind, Clock, Lightbulb, RefreshCw, Cpu, PlusCircle, ShieldCheck } from 'lucide-react'
+import { Clock, RefreshCw, Cpu, PlusCircle, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -50,7 +50,6 @@ export function DashboardView({
     );
   }
 
-  // ✅ SOLUCIÓN AL BLOQUEO: Si no hay datos, mostrar bienvenida en lugar de error
   if (!data) {
     return (
       <div className="p-4 space-y-6 animate-in fade-in duration-700">
@@ -79,7 +78,7 @@ export function DashboardView({
   }
 
   const nivel = data.severity || 'LOW';
-  const severityMap = {
+  const severityMap: Record<string, string> = {
     'LOW': 'NORMAL',
     'MEDIUM': 'PRECAUCION',
     'HIGH': 'PELIGRO',
@@ -98,7 +97,7 @@ export function DashboardView({
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-widest opacity-60">Diagnóstico IA</span>
-            <StatusBadge level={severityMap[nivel]} />
+            <StatusBadge level={severityMap[nivel] || 'NORMAL'} />
           </div>
           <CardTitle className="text-2xl font-black tracking-tight leading-tight">
             {data.diagnosticText || "Analizando calidad del aire..."}
@@ -149,18 +148,6 @@ function DashboardSkeleton() {
         <Skeleton className="h-24 rounded-2xl" />
         <Skeleton className="h-24 rounded-2xl" />
         <Skeleton className="h-24 rounded-2xl" />
-      </div>
-    </div>
-  );
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="p-4 space-y-4">
-      <Skeleton className="h-64 w-full rounded-[40px]" />
-      <div className="grid grid-cols-2 gap-3">
-        <Skeleton className="h-32 rounded-3xl" />
-        <Skeleton className="h-32 rounded-3xl" />
       </div>
     </div>
   );
