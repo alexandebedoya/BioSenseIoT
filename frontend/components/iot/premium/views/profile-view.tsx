@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { DeviceLinkCard } from "../device-link-card"
 
 export function ProfileView() {
   const [darkMode, setDarkMode] = useState(false)
@@ -47,6 +48,12 @@ export function ProfileView() {
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* NUEVA SECCIÓN: ACTIVACIÓN DE HARDWARE (UX Única) */}
+      <div className="px-4 mb-6">
+        <h2 className="font-semibold text-lg mb-3">Hardware BioSense</h2>
+        <DeviceLinkCard />
       </div>
 
       {/* Home Configuration */}

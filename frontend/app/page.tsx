@@ -59,6 +59,7 @@ export default function AirQualityApp() {
             data={data} 
             onNavigateToAlerts={() => setCurrentView("alertas")}
             onNavigateToRecommendations={() => setCurrentView("recomendaciones")}
+            onNavigateToProfile={() => setCurrentView("perfil")}
           />
         )
       case "monitoreo":

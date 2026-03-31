@@ -18,39 +18,38 @@ public class DeviceController {
     private final JwtService jwtService;
 
     /**
-     * Vincula un dispositivo (MAC) al usuario logueado.
+     * Vincula automáticamente el último dispositivo activo. 
+     * Si el dispositivo ya tenía dueño, se transfiere al nuevo usuario (basado en posesión física actual).
      */
-    @PostMapping("/link")
-    public Mono<ResponseEntity<Object>> linkDevice(
-            @RequestHeader("Authorization") String authHeader,
-            @RequestBody Map<String, String> request) {
-        
+    @PostMapping("/link-auto")
+    public Mono<ResponseEntity<Object>> linkDeviceAuto(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         String email = jwtService.extractUsername(token);
-        String macAddress = request.get("macAddress");
 
         return databaseClient.sql("SELECT id FROM users WHERE email = :email")
                 .bind("email", email)
                 .map(row -> row.get("id", Integer.class))
                 .first()
                 .flatMap(userId -> 
-                    // Actualizamos el dispositivo para que pertenezca a este usuario
-                    databaseClient.sql("UPDATE devices SET user_id = :userId WHERE mac_address = :mac")
-                            .bind("userId", userId)
-                            .bind("mac", macAddress)
-                            .fetch()
-                            .rowsUpdated()
-                            .flatMap(rows -> {
-                                if (rows == 0) {
-                                    // Si el dispositivo no existe en la DB (nunca ha enviado datos), lo creamos
-                                    return databaseClient.sql("INSERT INTO devices (mac_address, name, user_id) VALUES (:mac, 'Mi BioSense', :userId)")
-                                            .bind("mac", macAddress)
-                                            .bind("userId", userId)
-                                            .then() // Ejecuta la inserción y devuelve Mono<Void>
-                                            .then(Mono.just(ResponseEntity.ok((Object) Map.of("message", "Dispositivo creado y vinculado"))));
-                                }
-                                return Mono.just(ResponseEntity.ok((Object) Map.of("message", "Dispositivo vinculado exitosamente")));
-                            })
+                    // BUSCAR EL DISPOSITIVO QUE ENVIÓ DATOS EN LOS ÚLTIMOS 60 SEGUNDOS
+                    databaseClient.sql("SELECT mac_address FROM sensor_readings sr " +
+                                     "JOIN devices d ON sr.device_id = d.id " +
+                                     "WHERE sr.created_at > NOW() - INTERVAL '60 seconds' " +
+                                     "ORDER BY sr.created_at DESC LIMIT 1")
+                            .map(row -> row.get("mac_address", String.class))
+                            .first()
+                            .flatMap(mac -> 
+                                // Transferencia de propiedad: Cambiamos el user_id al nuevo usuario
+                                databaseClient.sql("UPDATE devices SET user_id = :userId, name = 'Mi BioSense' WHERE mac_address = :mac")
+                                        .bind("userId", userId)
+                                        .bind("mac", mac)
+                                        .then()
+                                        .then(Mono.just(ResponseEntity.ok((Object) Map.of(
+                                            "status", "success",
+                                            "message", "Dispositivo reclamado y vinculado: " + mac
+                                        ))))
+                            )
+                            .switchIfEmpty(Mono.just(ResponseEntity.status(404).body(Map.of("error", "No se detectó ningún BioSense activo. Enciéndelo y espera 10 segundos."))))
                 )
                 .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body(Map.of("error", e.getMessage()))));
     }
