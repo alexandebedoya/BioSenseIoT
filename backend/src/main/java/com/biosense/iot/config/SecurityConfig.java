@@ -39,8 +39,9 @@ public class SecurityConfig {
             .cors(cors -> cors.disable()) // Handled by CorsWebFilter
             .authorizeExchange(exchanges -> exchanges
                 .pathMatchers("/api/auth/**").permitAll()
-                .pathMatchers(HttpMethod.POST, "/api/sensors/reading").permitAll()
+                .pathMatchers(HttpMethod.POST, "/api/v2/sensors/reading").permitAll() // Nueva ruta unificada
                 .pathMatchers("/api/sensors/**").authenticated()
+                .pathMatchers("/api/v2/**").authenticated() // Proteger resto de V2
                 .pathMatchers("/api/devices/**").authenticated()
                 .anyExchange().authenticated()
             )
