@@ -30,13 +30,13 @@ const fetcher = async (url: string) => {
 
     if (!res.ok) {
       if (res.status === 404) return null;
-      throw new Error('Error al cargar diagnóstico');
+      throw new Error(`Error del servidor: ${res.status}`);
     }
 
     return await res.json();
   } catch (error) {
-    console.warn('Usando datos de respaldo para MQ-Sensors');
-    return null;
+    console.error('Error en fetcher:', error);
+    throw error; // Relanzar para que SWR lo capture en 'error'
   }
 }
 

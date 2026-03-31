@@ -53,10 +53,17 @@ public class SecurityConfig {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOriginPatterns(Arrays.asList("*"));
+        // Permitimos específicamente los orígenes de aplicaciones móviles y web locales
+        corsConfig.setAllowedOrigins(Arrays.asList(
+            "http://localhost",
+            "https://localhost",
+            "http://localhost:3000",
+            "capacitor://localhost",
+            "https://biosenseiot-production.up.railway.app"
+        ));
         corsConfig.setMaxAge(3600L);
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        corsConfig.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization", "x-requested-with", "Cache-Control"));
+        corsConfig.setAllowedHeaders(Arrays.asList("*"));
         corsConfig.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
