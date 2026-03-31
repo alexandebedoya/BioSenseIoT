@@ -2,18 +2,22 @@ import { Capacitor } from '@capacitor/core';
 import { AuthResponse } from './types';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
-// Inicializar GoogleAuth con el Client ID de tipo WEB (serverClientId)
-// En Capacitor Android, este ID se usa para obtener el idToken que enviamos al backend.
-GoogleAuth.initialize({
-  clientId: '669903110693-3f1lt6ci39go17j1hsutaeabrt36utq0.apps.googleusercontent.com',
-  scopes: ['profile', 'email'],
-  grantOfflineAccess: true,
-});
+// Inicializar de forma segura solo en el cliente
+if (typeof window !== 'undefined') {
+  GoogleAuth.initialize({
+    clientId: '669903110693-3f1lt6ci39go17j1hsutaeabrt36utq0.apps.googleusercontent.com',
+    scopes: ['profile', 'email'],
+    grantOfflineAccess: true,
+  }).catch(err => {
+    console.warn('GoogleAuth no se pudo inicializar. Esto puede deberse a que el SHA-1 del APK local no coincide con el de Google Cloud Console.', err);
+  });
+}
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://biosenseiot-production.up.railway.app';
+// URL de producción directa para asegurar conectividad en el APK Android
+const API_URL = 'https://biosenseiot-production.up.railway.app';
 
 export class AuthService {
-  
+...
   static async loginWithGoogle(): Promise<AuthResponse> {
     try {
       // Disparar el login nativo o web real del plugin

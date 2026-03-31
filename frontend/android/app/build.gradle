@@ -48,7 +48,8 @@ android {
         }
         
         debug {
-            // El modo debug usa la firma por defecto de Android
+            // El modo debug ahora también usa tu firma para que Google Auth funcione en VS Code
+            signingConfig signingConfigs.release
         }
     }
 
