@@ -64,8 +64,9 @@ public class SecurityConfig {
         ));
         corsConfig.setMaxAge(3600L);
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        corsConfig.setAllowedHeaders(Arrays.asList("*"));
+        corsConfig.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "x-requested-with", "Cache-Control"));
         corsConfig.setAllowCredentials(true);
+        corsConfig.setExposedHeaders(Arrays.asList("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);

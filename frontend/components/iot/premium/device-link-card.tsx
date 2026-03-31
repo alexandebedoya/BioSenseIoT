@@ -13,7 +13,8 @@ async function linkDeviceAuto() {
   const response = await fetch('https://biosenseiot-production.up.railway.app/api/devices/link-auto', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
     }
   });
 
