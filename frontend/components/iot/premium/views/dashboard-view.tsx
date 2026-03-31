@@ -78,12 +78,13 @@ export function DashboardView({
   }
 
   const nivel = data.severity || 'LOW';
-  const severityMap: Record<string, string> = {
+  const severityMap: Record<string, 'NORMAL' | 'PRECAUCION' | 'PELIGRO'> = {
     'LOW': 'NORMAL',
     'MEDIUM': 'PRECAUCION',
     'HIGH': 'PELIGRO',
-    'CRITICAL': 'CRÍTICO'
+    'CRITICAL': 'PELIGRO' // Evitamos 'CRÍTICO' porque no existe en StatusIndicator
   };
+
 
   return (
     <div className="p-4 space-y-4 animate-in slide-in-from-bottom-2 duration-500">

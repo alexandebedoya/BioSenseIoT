@@ -22,7 +22,7 @@ export default function AirQualityApp() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
   const [currentView, setCurrentView] = useState<ViewType>("dashboard")
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { data } = useSensorData()
+  const { data, isLoading, isError } = useSensorData()
 
   useEffect(() => {
     setMounted(true)
@@ -58,6 +58,8 @@ export default function AirQualityApp() {
         return (
           <DashboardView 
             data={data} 
+            isLoading={isLoading}
+            isError={isError}
             onNavigateToAlerts={() => setCurrentView("alertas")}
             onNavigateToRecommendations={() => setCurrentView("recomendaciones")}
             onNavigateToProfile={() => setCurrentView("perfil")}
@@ -76,7 +78,15 @@ export default function AirQualityApp() {
       case "perfil":
         return <ProfileView />
       default:
-        return <DashboardView data={data} onNavigateToAlerts={() => setCurrentView("alertas")} onNavigateToRecommendations={() => setCurrentView("recomendaciones")} />
+        return (
+          <DashboardView 
+            data={data} 
+            isLoading={isLoading}
+            isError={isError}
+            onNavigateToAlerts={() => setCurrentView("alertas")} 
+            onNavigateToRecommendations={() => setCurrentView("recomendaciones")} 
+          />
+        )
     }
   }
 

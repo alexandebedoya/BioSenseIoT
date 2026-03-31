@@ -13,10 +13,10 @@ import {
   ReferenceLine
 } from "recharts"
 import { cn } from "@/lib/utils"
-import type { SensorData } from "@/lib/types"
+import type { DiagnosticResponse } from "@/lib/types"
 
 interface MonitoringViewProps {
-  data: SensorData
+  data: DiagnosticResponse
 }
 
 const rooms = ["Sala", "Cocina", "Dormitorio", "Bano"]
@@ -79,19 +79,19 @@ export function MonitoringView({ data }: MonitoringViewProps) {
             <SensorStatusRow 
               name="MQ-4 (Metano)" 
               type="Sensor de CH4" 
-              status={data.mq4.status === "danger" ? "alerta" : "normal"} 
+              status={data.mq4 > 500 ? "alerta" : "normal"} 
               online={true} 
             />
             <SensorStatusRow 
               name="MQ-7 (CO)" 
               type="Sensor de monoxido" 
-              status={data.mq7.status === "danger" ? "alerta" : "normal"} 
+              status={data.mq7 > 100 ? "alerta" : "normal"} 
               online={true} 
             />
             <SensorStatusRow 
-              name="MQ-135 (COVs)" 
-              type="Sensor de calidad" 
-              status="normal" 
+              name="MQ-135 (Calidad)" 
+              type="Sensor de calidad de aire" 
+              status={data.mq135 > 300 ? "alerta" : "normal"} 
               online={true} 
             />
           </div>
@@ -108,11 +108,9 @@ export function MonitoringView({ data }: MonitoringViewProps) {
             </div>
             <span className={cn(
               "text-2xl font-bold",
-              data.mq7.status === "safe" && "text-status-safe",
-              data.mq7.status === "warning" && "text-status-warning",
-              data.mq7.status === "danger" && "text-status-danger"
+              data.mq7 < 50 ? "text-emerald-500" : data.mq7 < 100 ? "text-amber-500" : "text-red-500"
             )}>
-              {data.mq7.value.toFixed(1)} ppm
+              {data.mq7.toFixed(1)} ppm
             </span>
           </div>
           
@@ -167,11 +165,9 @@ export function MonitoringView({ data }: MonitoringViewProps) {
             </div>
             <span className={cn(
               "text-2xl font-bold",
-              data.mq4.status === "safe" && "text-status-safe",
-              data.mq4.status === "warning" && "text-status-warning",
-              data.mq4.status === "danger" && "text-status-danger"
+              data.mq4 < 200 ? "text-emerald-500" : data.mq4 < 500 ? "text-amber-500" : "text-red-500"
             )}>
-              {data.mq4.value.toFixed(1)} ppm
+              {data.mq4.toFixed(1)} ppm
             </span>
           </div>
           
@@ -215,10 +211,15 @@ export function MonitoringView({ data }: MonitoringViewProps) {
         <div className="bg-card rounded-2xl border border-border/50 p-4 animate-fade-in-up" style={{ animationDelay: '250ms' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-semibold">Compuestos Organicos Volatiles</h3>
+              <h3 className="font-semibold">Calidad de Aire</h3>
               <p className="text-xs text-muted-foreground">MQ-135</p>
             </div>
-            <span className="text-2xl font-bold text-status-safe">28.0 ppm</span>
+            <span className={cn(
+              "text-2xl font-bold",
+              data.mq135 < 150 ? "text-emerald-500" : data.mq135 < 300 ? "text-amber-500" : "text-red-500"
+            )}>
+              {data.mq135.toFixed(1)} ppm
+            </span>
           </div>
           
           <div className="h-40">
@@ -243,7 +244,7 @@ export function MonitoringView({ data }: MonitoringViewProps) {
                     borderRadius: '12px',
                     fontSize: '12px'
                   }}
-                  formatter={(value: number) => [`${value} ppm`, 'COVs']}
+                  formatter={(value: number) => [`${value} ppm`, 'Calidad']}
                 />
                 <Bar 
                   dataKey="COVs" 
@@ -264,39 +265,39 @@ export function MonitoringView({ data }: MonitoringViewProps) {
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between text-sm mb-1">
-                <span>CO</span>
-                <span className="text-muted-foreground">{data.mq7.value.toFixed(1)} / 50.0 ppm</span>
+                <span>CO (MQ-7)</span>
+                <span className="text-muted-foreground">{data.mq7.toFixed(1)} / 50.0 ppm</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-status-safe via-status-warning to-status-danger rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min((data.mq7.value / 50) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((data.mq7 / 50) * 100, 100)}%` }}
                 />
               </div>
             </div>
             
             <div>
               <div className="flex items-center justify-between text-sm mb-1">
-                <span>CH4</span>
-                <span className="text-muted-foreground">{data.mq4.value.toFixed(1)} / 100.0 ppm</span>
+                <span>CH4 (MQ-4)</span>
+                <span className="text-muted-foreground">{data.mq4.toFixed(1)} / 100.0 ppm</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-status-safe via-status-warning to-status-danger rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min((data.mq4.value / 100) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((data.mq4 / 100) * 100, 100)}%` }}
                 />
               </div>
             </div>
             
             <div>
               <div className="flex items-center justify-between text-sm mb-1">
-                <span>COVs</span>
-                <span className="text-muted-foreground">28.0 / 80.0 ppm</span>
+                <span>Calidad (MQ-135)</span>
+                <span className="text-muted-foreground">{data.mq135.toFixed(1)} / 80.0 ppm</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-status-safe via-status-warning to-status-danger rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min((28 / 80) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((data.mq135 / 80) * 100, 100)}%` }}
                 />
               </div>
             </div>

@@ -4,11 +4,11 @@ import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
 // Inicializar de forma segura solo en el cliente
 if (typeof window !== 'undefined') {
-  GoogleAuth.initialize({
+  (GoogleAuth.initialize({
     clientId: '669903110693-3f1lt6ci39go17j1hsutaeabrt36utq0.apps.googleusercontent.com',
     scopes: ['profile', 'email'],
     grantOfflineAccess: true,
-  }).catch(err => {
+  }) as any).catch((err: any) => {
     console.warn('GoogleAuth no se pudo inicializar. Esto puede deberse a que el SHA-1 del APK local no coincide con el de Google Cloud Console.', err);
   });
 }

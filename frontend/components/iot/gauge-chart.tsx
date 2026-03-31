@@ -5,14 +5,16 @@ import { AirQualityLevel, getSensorStatus } from '@/lib/types'
 
 interface GaugeChartProps {
   value: number
-  maxValue: number
-  sensor: 'mq4' | 'mq7'
+  maxValue?: number
+  sensor: 'mq4' | 'mq7' | 'mq135'
   label: string
   unit?: string
 }
 
 export function GaugeChart({ value, maxValue, sensor, label, unit = 'ppm' }: GaugeChartProps) {
-  const percentage = Math.min((value / maxValue) * 100, 100)
+  // Valores máximos predeterminados razonables para evitar NaN
+  const safeMaxValue = maxValue || (sensor === 'mq4' ? 1000 : sensor === 'mq7' ? 500 : 1000);
+  const percentage = Math.min((value / safeMaxValue) * 100, 100)
   const status = getSensorStatus(value, sensor)
   
   const getColor = (status: AirQualityLevel) => {

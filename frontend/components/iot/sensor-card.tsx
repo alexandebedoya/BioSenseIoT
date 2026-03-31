@@ -7,14 +7,14 @@ import { StatusIndicator } from './status-indicator'
 import { Flame, Cloud, TrendingUp, TrendingDown } from 'lucide-react'
 
 interface SensorCardProps {
-  sensorId: 'mq4' | 'mq7'
+  sensorId: 'mq4' | 'mq7' | 'mq135'
   value: number
   trend?: 'up' | 'down' | 'stable'
   showDetails?: boolean
 }
 
 export function SensorCard({ sensorId, value, trend = 'stable', showDetails = false }: SensorCardProps) {
-  const info = SENSOR_INFO[sensorId]
+  const info = SENSOR_INFO[sensorId] || SENSOR_INFO.mq135
   const status = getSensorStatus(value, sensorId)
   
   const Icon = sensorId === 'mq4' ? Flame : Cloud

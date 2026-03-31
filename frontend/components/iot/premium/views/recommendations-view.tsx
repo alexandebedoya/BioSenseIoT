@@ -9,10 +9,10 @@ import {
   ArrowRight
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { SensorData } from "@/lib/types"
+import type { DiagnosticResponse } from "@/lib/types"
 
 interface RecommendationsViewProps {
-  data: SensorData
+  data: DiagnosticResponse
 }
 
 interface Recommendation {
@@ -23,10 +23,10 @@ interface Recommendation {
   action?: string
 }
 
-function getRecommendations(data: SensorData): Recommendation[] {
+function getRecommendations(data: DiagnosticResponse): Recommendation[] {
   const recommendations: Recommendation[] = []
 
-  if (data.mq7.status === "danger" || data.mq7.value > 50) {
+  if (data.severity === "CRITICAL" || data.mq7 > 100) {
     recommendations.push({
       id: "co-danger",
       type: "urgent",
@@ -34,7 +34,7 @@ function getRecommendations(data: SensorData): Recommendation[] {
       description: "Se detectaron niveles peligrosos de monoxido de carbono. Abra ventanas inmediatamente y considere evacuar el area.",
       action: "Ventilar ahora"
     })
-  } else if (data.mq7.status === "warning" || data.mq7.value > 30) {
+  } else if (data.severity === "HIGH" || data.mq7 > 50) {
     recommendations.push({
       id: "co-warning",
       type: "suggestion",
@@ -44,23 +44,13 @@ function getRecommendations(data: SensorData): Recommendation[] {
     })
   }
 
-  if (data.mq4.status === "warning" || data.mq4.value > 50) {
+  if (data.mq4 > 200) {
     recommendations.push({
       id: "ch4-warning",
       type: "suggestion",
       title: "Metano Detectado",
       description: "Niveles moderados de metano. Verifique las conexiones de gas y asegurese de que no haya fugas.",
       action: "Revisar"
-    })
-  }
-
-  if (data.humidity > 70) {
-    recommendations.push({
-      id: "humidity",
-      type: "info",
-      title: "Humedad Alta",
-      description: "La humedad esta elevada. Considere usar un deshumidificador para prevenir moho.",
-      action: "Mas info"
     })
   }
 
@@ -154,19 +144,19 @@ export function RecommendationsView({ data }: RecommendationsViewProps) {
               <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                 La calidad del aire en tu hogar es <span className={cn(
                   "font-medium",
-                  data.mq7.status === "safe" && data.mq4.status === "safe" 
+                  data.severity === "LOW" 
                     ? "text-status-safe" 
-                    : data.mq7.status === "danger" || data.mq4.status === "danger"
+                    : data.severity === "CRITICAL" || data.severity === "HIGH"
                     ? "text-status-danger"
                     : "text-status-warning"
                 )}>
-                  {data.mq7.status === "safe" && data.mq4.status === "safe" 
+                  {data.severity === "LOW" 
                     ? "buena" 
-                    : data.mq7.status === "danger" || data.mq4.status === "danger"
+                    : data.severity === "CRITICAL" || data.severity === "HIGH"
                     ? "preocupante"
                     : "moderada"}
                 </span>. 
-                {data.mq7.status === "safe" && data.mq4.status === "safe" 
+                {data.severity === "LOW" 
                   ? " Continua con tus habitos de ventilacion actuales."
                   : " Te recomendamos seguir las sugerencias a continuacion."}
               </p>
