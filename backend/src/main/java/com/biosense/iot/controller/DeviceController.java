@@ -46,6 +46,7 @@ public class DeviceController {
                                     return databaseClient.sql("INSERT INTO devices (mac_address, name, user_id) VALUES (:mac, 'Mi BioSense', :userId)")
                                             .bind("mac", macAddress)
                                             .bind("userId", userId)
+                                            .then() // Ejecuta la inserción y devuelve Mono<Void>
                                             .then(Mono.just(ResponseEntity.ok((Object) Map.of("message", "Dispositivo creado y vinculado"))));
                                 }
                                 return Mono.just(ResponseEntity.ok((Object) Map.of("message", "Dispositivo vinculado exitosamente")));

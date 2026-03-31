@@ -35,7 +35,7 @@ public class SensorReadingController {
                                      "WHERE d.user_id = :userId " +
                                      "ORDER BY sr.created_at DESC LIMIT 1")
                             .bind("userId", userId)
-                            .map((row, metadata) -> Map.of(
+                            .map((row, metadata) -> (Object) Map.of(
                                 "mq4", row.get("mq4_value", Double.class),
                                 "mq7", row.get("mq7_value", Double.class),
                                 "mq135", row.get("mq135_value", Double.class),
