@@ -2,8 +2,8 @@ package com.biosense.iot.auth.infrastructure.adapter.out.persistence;
 
 import com.biosense.iot.auth.domain.model.UserDomain;
 import com.biosense.iot.auth.domain.port.out.UserRepositoryPort;
-import com.biosense.iot.entity.User;
-import com.biosense.iot.repository.UserRepository;
+import com.biosense.iot.auth.infrastructure.adapter.out.persistence.entity.UserEntity;
+import com.biosense.iot.auth.infrastructure.adapter.out.persistence.repository.UserRepository;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -24,12 +24,18 @@ public class UserPersistenceAdapter implements UserRepositoryPort {
     }
 
     @Override
+    public Mono<UserDomain> findByEmail(String email) {
+        return repository.findByEmail(email)
+                .map(this::toDomain);
+    }
+
+    @Override
     public Mono<UserDomain> save(UserDomain user) {
         return repository.save(toEntity(user))
                 .map(this::toDomain);
     }
 
-    private UserDomain toDomain(User entity) {
+    private UserDomain toDomain(UserEntity entity) {
         return new UserDomain(
                 entity.getId(),
                 entity.getEmail(),
@@ -40,8 +46,8 @@ public class UserPersistenceAdapter implements UserRepositoryPort {
         );
     }
 
-    private User toEntity(UserDomain domain) {
-        return User.builder()
+    private UserEntity toEntity(UserDomain domain) {
+        return UserEntity.builder()
                 .id(domain.getId())
                 .email(domain.getEmail())
                 .fullName(domain.getFullName())

@@ -1,4 +1,4 @@
-package com.biosense.iot.dto;
+package com.biosense.iot.device.domain.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SensorReadingRequest {
+public class DeviceDomain {
+    private Integer id;
     private String macAddress;
-    private Double mq4;
-    private Double mq7;
-    private Double mq135;
+    private String name;
+    private Integer userId;
 }

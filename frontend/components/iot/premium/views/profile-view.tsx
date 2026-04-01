@@ -11,147 +11,137 @@ import {
   Globe, 
   Ruler,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Bell,
+  Smartphone,
+  Shield
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { DeviceLinkCard } from "../device-link-card"
+import { AuthService } from "@/lib/auth-service"
 
 export function ProfileView() {
   const [darkMode, setDarkMode] = useState(false)
-  const [language, setLanguage] = useState("Espanol")
-  const [units, setUnits] = useState("Metrico")
-  const [housingType, setHousingType] = useState("Casa")
+  const [notifications, setNotifications] = useState(true)
+  const [language, setLanguage] = useState("Español")
+  
+  const handleLogout = () => {
+    AuthService.logout();
+    window.location.reload();
+  };
 
   return (
-    <div className="pb-24">
+    <div className="pb-24 animate-in fade-in duration-500">
       {/* Header */}
       <div className="p-4 pb-0">
-        <h1 className="text-2xl font-bold tracking-tight">Perfil y Configuracion</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Mi BioSense</h1>
       </div>
 
       {/* User Card */}
       <div className="p-4">
-        <div className="bg-card rounded-2xl border border-border/50 p-4 animate-fade-in-up">
+        <div className="bg-card rounded-3xl border border-border/50 p-5 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-500 flex items-center justify-center text-2xl font-bold text-white">
-                a
-              </div>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-2xl font-bold text-white shadow-lg shadow-primary/20">
+              AC
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-lg">alex colimba</h2>
+              <h2 className="font-bold text-lg">Alex Colimba</h2>
               <p className="text-sm text-muted-foreground truncate">alexis10129706@gmail.com</p>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-xl">
+            <Button variant="secondary" size="icon" className="rounded-xl">
               <Pencil className="w-4 h-4" />
             </Button>
           </div>
         </div>
       </div>
 
-      {/* NUEVA SECCIÓN: ACTIVACIÓN DE HARDWARE (UX Única) */}
+      {/* HARDWARE: La sección más importante para el usuario */}
       <div className="px-4 mb-6">
-        <h2 className="font-semibold text-lg mb-3">Hardware BioSense</h2>
+        <div className="flex items-center gap-2 mb-3">
+          <Smartphone className="w-5 h-5 text-primary" />
+          <h2 className="font-bold text-lg">Vinculación de Hardware</h2>
+        </div>
         <DeviceLinkCard />
       </div>
 
-      {/* Home Configuration */}
-      <div className="px-4">
-        <h2 className="font-semibold text-lg mb-3">Configuracion del Hogar</h2>
-        <div className="bg-card rounded-2xl border border-border/50 overflow-hidden animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-          <div className="flex items-center justify-between p-4 border-b border-border/30">
-            <div className="flex items-center gap-3">
-              <Users className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm">Habitantes</span>
-            </div>
-            <span className="font-medium">5</span>
-          </div>
-          <div className="flex items-center justify-between p-4 border-b border-border/30">
-            <div className="flex items-center gap-3">
-              <PawPrint className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm">Mascotas</span>
-            </div>
-            <span className="font-medium">4</span>
-          </div>
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Home className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm">Tipo de Vivienda</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{housingType}</span>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-            </div>
-          </div>
-        </div>
+      {/* CONFIGURACIÓN: Agrupada por funcionalidad */}
+      <div className="px-4 space-y-6">
         
-        <Button variant="ghost" className="w-full mt-3 text-primary font-medium hover:text-primary/80 hover:bg-transparent">
-          Guardar Cambios
-        </Button>
-      </div>
-
-      {/* Preferences */}
-      <div className="p-4">
-        <h2 className="font-semibold text-lg mb-3">Preferencias</h2>
-        <div className="bg-card rounded-2xl border border-border/50 overflow-hidden animate-fade-in-up" style={{ animationDelay: '150ms' }}>
-          {/* Dark Mode Toggle */}
-          <div className="flex items-center justify-between p-4 border-b border-border/30">
-            <div className="flex items-center gap-3">
-              <Moon className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm">Modo Oscuro</span>
+        {/* Notificaciones y Preferencias */}
+        <section>
+          <h2 className="font-bold text-lg mb-3 px-1">Preferencias</h2>
+          <div className="bg-card rounded-3xl border border-border/50 overflow-hidden shadow-sm">
+            
+            {/* Modo Oscuro */}
+            <div className="flex items-center justify-between p-4 border-b border-border/30">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                  <Moon className="w-4 h-4 text-slate-600" />
+                </div>
+                <span className="text-sm font-medium">Modo Oscuro</span>
+              </div>
+              <Switch checked={darkMode} onCheckedChange={setDarkMode} />
             </div>
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={cn(
-                "relative w-12 h-7 rounded-full transition-colors duration-300",
-                darkMode ? "bg-primary" : "bg-muted"
-              )}
-            >
-              <span
-                className={cn(
-                  "absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300",
-                  darkMode && "translate-x-5"
-                )}
-              />
+
+            {/* Notificaciones */}
+            <div className="flex items-center justify-between p-4 border-b border-border/30">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <Bell className="w-4 h-4 text-blue-500" />
+                </div>
+                <span className="text-sm font-medium">Alertas Críticas</span>
+              </div>
+              <Switch checked={notifications} onCheckedChange={setNotifications} />
+            </div>
+
+            {/* Idioma */}
+            <div className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-50 rounded-lg">
+                  <Globe className="w-4 h-4 text-emerald-500" />
+                </div>
+                <span className="text-sm font-medium">Idioma</span>
+              </div>
+              <button className="flex items-center gap-1 text-sm font-bold text-primary">
+                {language} <ChevronDown className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Seguridad y Sistema */}
+        <section>
+          <div className="bg-card rounded-3xl border border-border/50 overflow-hidden shadow-sm">
+            <button className="w-full flex items-center justify-between p-4 border-b border-border/30 hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <Shield className="w-4 h-4 text-purple-500" />
+                </div>
+                <span className="text-sm font-medium">Seguridad de la cuenta</span>
+              </div>
+              <ChevronDown className="w-4 h-4 text-muted-foreground -rotate-90" />
             </button>
-          </div>
-          
-          {/* Language */}
-          <div className="flex items-center justify-between p-4 border-b border-border/30">
-            <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm">Idioma</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{language}</span>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            <div className="p-4 bg-slate-50/50">
+              <p className="text-[10px] text-center text-slate-400 font-medium uppercase tracking-tighter">
+                BioSense IoT Monitor • Versión 2.0.4 PRO
+              </p>
             </div>
           </div>
-          
-          {/* Units */}
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Ruler className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm">Unidades</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{units}</span>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-            </div>
-          </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Logout Button */}
-      <div className="px-4 pt-4">
-        <Button 
-          variant="outline" 
-          className="w-full h-12 rounded-2xl border-status-danger/30 text-status-danger hover:bg-status-danger/10 hover:text-status-danger"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Cerrar Sesion
-        </Button>
+        {/* Botón de Salida */}
+        <div className="pt-2">
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="w-full h-14 rounded-2xl border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 font-bold gap-2"
+          >
+            <LogOut className="w-5 h-5" />
+            CERRAR SESIÓN
+          </Button>
+        </div>
       </div>
     </div>
   )

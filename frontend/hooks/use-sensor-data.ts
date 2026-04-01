@@ -41,9 +41,9 @@ const fetcher = async (url: string) => {
 }
 
 export function useSensorData() {
-  // Cambiamos el endpoint al de diagnósticos que maneja tus MQ
+  // Cambiamos el endpoint al de diagnósticos V2
   const { data, error, isLoading, mutate } = useSWR<DiagnosticResponse | null>(
-    '/api/diagnostics/latest',
+    '/api/v2/diagnostics/latest',
     fetcher,
     {
       refreshInterval: 10000,

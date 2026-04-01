@@ -1,6 +1,8 @@
 package com.biosense.iot.auth.infrastructure.adapter.in.web;
 
 import com.biosense.iot.auth.domain.port.in.AuthenticateWithGoogleUseCase;
+import com.biosense.iot.auth.domain.port.in.LoginUseCase;
+import com.biosense.iot.auth.domain.port.in.RegisterUseCase;
 import com.biosense.iot.dto.AuthResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -11,10 +13,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
-/**
- * Adaptador de entrada Web (V2) siguiendo Clean Architecture.
- * Este controlador es independiente de la implementación de la lógica de negocio.
- */
 @RestController
 @RequestMapping("/api/v2/auth")
 @RequiredArgsConstructor
@@ -22,24 +20,30 @@ public class AuthControllerV2 {
 
     private static final Logger log = LoggerFactory.getLogger(AuthControllerV2.class);
     private final AuthenticateWithGoogleUseCase authenticateWithGoogleUseCase;
+    private final LoginUseCase loginUseCase;
+    private final RegisterUseCase registerUseCase;
 
-    /**
-     * Nuevo endpoint de autenticación con Google.
-     * Delegación pura al caso de uso de dominio.
-     */
     @PostMapping("/google")
     public Mono<ResponseEntity<AuthResponse>> exchangeGoogleToken(@RequestBody Map<String, String> request) {
         String idToken = request.get("idToken");
-        
         if (idToken == null || idToken.isEmpty()) {
-            log.warn("Intento de login con Google sin idToken en V2");
             return Mono.just(ResponseEntity.badRequest().build());
         }
-
-        log.info("Iniciando flujo de autenticación Google V2 (Clean Architecture)");
-        
         return authenticateWithGoogleUseCase.execute(idToken)
+                .map(ResponseEntity::ok);
+    }
+
+    @PostMapping("/login")
+    public Mono<ResponseEntity<AuthResponse>> login(@RequestBody Map<String, String> request) {
+        return loginUseCase.execute(request.get("email"), request.get("password"))
                 .map(ResponseEntity::ok)
-                .doOnError(e -> log.error("Error en flujo Auth V2: {}", e.getMessage()));
+                .onErrorResume(e -> Mono.just(ResponseEntity.status(401).build()));
+    }
+
+    @PostMapping("/register")
+    public Mono<ResponseEntity<AuthResponse>> register(@RequestBody Map<String, String> request) {
+        return registerUseCase.execute(request.get("email"), request.get("password"), request.get("fullName"))
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }
 }

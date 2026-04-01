@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
 }
 
 // URL de producción directa para asegurar conectividad en el APK Android
-const API_URL = 'https://biosenseiot-production.up.railway.app';
+const API_URL = 'https://biosenseiot-production.up.railway.app/api/v2';
 
 export class AuthService {
   
@@ -31,14 +31,13 @@ export class AuthService {
       return await this.sendTokenToBackend(idToken);
     } catch (error: any) {
       console.error('Error GoogleAuth Detallado:', error);
-      // Extraer código de error de Google para depuración
       const errorCode = error.code || error.message;
       throw new Error(`Google Login Falló (${errorCode})`);
     }
   }
 
   private static async sendTokenToBackend(idToken: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/api/auth/google`, {
+    const response = await fetch(`${API_URL}/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken }),
@@ -55,15 +54,14 @@ export class AuthService {
   }
 
   static async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
+    const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Error al iniciar sesión');
+      throw new Error('Credenciales incorrectas');
     }
 
     const data: AuthResponse = await response.json();
@@ -72,15 +70,14 @@ export class AuthService {
   }
 
   static async register(email: string, password: string, fullName: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/api/auth/register`, {
+    const response = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, fullName }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Error al registrarse');
+      throw new Error('Error al registrar usuario');
     }
 
     const data: AuthResponse = await response.json();

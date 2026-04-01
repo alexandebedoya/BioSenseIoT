@@ -10,7 +10,7 @@ async function linkDeviceAuto() {
   const token = localStorage.getItem('auth_token')
   if (!token) throw new Error('No autenticado')
 
-  const response = await fetch('https://biosenseiot-production.up.railway.app/api/devices/link-auto', {
+  const response = await fetch('https://biosenseiot-production.up.railway.app/api/v2/devices/link-auto', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,

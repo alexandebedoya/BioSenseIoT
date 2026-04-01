@@ -5,5 +5,6 @@ import reactor.core.publisher.Mono;
 
 public interface UserRepositoryPort {
     Mono<UserDomain> findByGoogleIdOrEmail(String googleId, String email);
+    Mono<UserDomain> findByEmail(String email);
     Mono<UserDomain> save(UserDomain user);
 }

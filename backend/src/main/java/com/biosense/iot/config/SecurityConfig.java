@@ -38,11 +38,10 @@ public class SecurityConfig {
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .cors(cors -> cors.disable()) // Handled by CorsWebFilter
             .authorizeExchange(exchanges -> exchanges
-                .pathMatchers("/api/auth/**").permitAll()
+                .pathMatchers("/api/v2/auth/**").permitAll() // Nueva ruta auth pública
                 .pathMatchers(HttpMethod.POST, "/api/v2/sensors/reading").permitAll() // Nueva ruta unificada
-                .pathMatchers("/api/sensors/**").authenticated()
-                .pathMatchers("/api/v2/**").authenticated() // Proteger resto de V2
-                .pathMatchers("/api/devices/**").authenticated()
+                .pathMatchers("/api/v2/devices/**").authenticated() 
+                .pathMatchers("/api/v2/diagnostics/**").authenticated()
                 .anyExchange().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
